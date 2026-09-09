@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+  body { margin: 0; background: #f3f2f2; color: #201e1d; font-family: "Source Serif 4", Georgia, serif; }
+  a { color: #006786; text-decoration: none; }
+  a:hover { color: #1186ac; text-decoration: underline; }
+  *:focus-visible { outline: 2px solid #0088b0; outline-offset: 2px; }
+</style>
+</helmet>
+
+<template id="__bundler_thumbnail">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#f3f2f2"/><g fill="#0088b0"><rect x="30" y="34" width="10" height="8" rx="1"/><rect x="45" y="34" width="10" height="8" rx="1"/><rect x="60" y="34" width="10" height="8" rx="1"/><rect x="30" y="46" width="10" height="8" rx="1"/><rect x="45" y="46" width="10" height="8" rx="1"/></g><g fill="#d6006c"><rect x="60" y="46" width="10" height="8" rx="1"/><rect x="30" y="58" width="10" height="8" rx="1"/></g><g fill="none" stroke="#d7d3d3" stroke-width="1.4"><rect x="45.7" y="58.7" width="8.6" height="6.6" rx="1"/><rect x="60.7" y="58.7" width="8.6" height="6.6" rx="1"/></g></svg>
+</template>
+<div style="min-height: 100vh; background: #f3f2f2; padding: 40px 30px 60px 30px; box-sizing: border-box;">
+
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 30px; flex-wrap: wrap; margin-bottom: 30px;">
+    <div>
+      <div style="font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: #605d5d; margin-bottom: 10px;">Annual &amp; monthly edition</div>
+      <h1 style="font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 58px; line-height: 0.95; letter-spacing: -0.01em; margin: 0;">Habit Tracker</h1>
+      <div style="font-size: 17px; color: #444141; margin-top: 10px;">Track your daily, weekly and monthly habits on one sheet.</div>
+    </div>
+    <div style="display: flex; gap: 5px; padding: 4px; border: 1px solid #d7d3d3; border-radius: 2px; background: #f8f4f4;">
+      <button type="button" onClick="{{ showMonthly }}" style="{{ monthlyBtnStyle }}">Monthly sheet</button>
+      <button type="button" onClick="{{ showAnnual }}" style="{{ annualBtnStyle }}">Annual overview</button>
+    </div>
+  </div>
+
+  <div style="border-top: 3px solid #201e1d; margin-bottom: 2px;"></div>
+  <div style="border-top: 1px solid #201e1d; display: flex; justify-content: space-between; gap: 20px; padding: 8px 0 30px 0; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: #605d5d;">
+    <div>{{ datelineLeft }}</div>
+    <div>Nine daily habits &middot; five weekly habits</div>
+    <div>Sheet 1 of 2</div>
+  </div>
+
+  <sc-if value="{{ isMonthly }}" hint-placeholder-val="{{ true }}">
+  <div style="overflow-x: auto; padding-bottom: 10px;">
+  <div style="min-width: 1420px;">
+
+    <div style="display: flex; gap: 30px; align-items: stretch; margin-bottom: 34px;">
+      <div style="flex: 0 0 300px;">
+        <div style="font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #605d5d; margin-bottom: 15px;">Month</div>
+        <div style="font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 40px; line-height: 1;">October</div>
+        <div style="font-size: 26px; color: #7d7979; margin-top: 5px;">2025</div>
+      </div>
+      <div style="flex: 1 1 auto; min-width: 0;">
+        <div style="font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #605d5d; margin-bottom: 15px;">Daily progress</div>
+        <div style="display: flex; align-items: flex-end; gap: 3px; height: 92px;">
+          <sc-for list="{{ bars }}" as="bar" hint-placeholder-count="31">
+            <div style="{{ bar.style }}"></div>
+          </sc-for>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 11px; color: #7d7979; margin-top: 8px; letter-spacing: 0.1em;">
+          <div>OCT 1</div>
+          <div>OCT 31</div>
+        </div>
+      </div>
+      <div style="flex: 0 0 320px; display: flex; gap: 20px; align-items: center;">
+        <div style="position: relative; width: 118px; height: 118px; flex: 0 0 118px;">
+          <div style="{{ mainRingStyle }}"></div>
+          <div style="position: absolute; inset: 13px; border-radius: 50%; background: #f3f2f2; display: flex; align-items: center; justify-content: center; font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 30px;">89%</div>
+        </div>
+        <div>
+          <div style="font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #605d5d; margin-bottom: 10px;">Completed</div>
+          <div style="font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 30px; line-height: 1;">202 / 228</div>
+          <div style="font-size: 15px; color: #444141; margin-top: 8px;">26 checks left this month</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #605d5d; margin-bottom: 12px;">Daily habits</div>
+
+    <div style="display: flex; align-items: stretch; border-bottom: 1px solid #201e1d; padding-bottom: 7px;">
+      <div style="flex: 0 0 300px;"></div>
+      <sc-for list="{{ weeks }}" as="wk" hint-placeholder-count="5">
+        <div style="{{ wk.headStyle }}">{{ wk.label }}</div>
+      </sc-for>
+      <div style="flex: 0 0 54px; text-align: center; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #605d5d;">Goal</div>
+      <div style="flex: 0 0 220px; padding-left: 15px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #605d5d;">Progress</div>
+    </div>
+
+    <div style="display: flex; align-items: stretch; border-bottom: 1px solid #d7d3d3; padding: 6px 0;">
+      <div style="flex: 0 0 300px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #7d7979;">Days &middot; 31</div>
+      <sc-for list="{{ weeks }}" as="wk" hint-placeholder-count="5">
+        <div style="display: flex; padding: 0 6px; gap: 2px;">
+          <sc-for list="{{ wk.days }}" as="day" hint-placeholder-count="7">
+            <div style="width: 22px; text-align: center;">
+              <div style="font-size: 10px; color: #9b9797; letter-spacing: 0.04em;">{{ day.dow }}</div>
+              <div style="font-size: 12px; color: #444141;">{{ day.n }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+      <div style="flex: 0 0 54px;"></div>
+      <div style="flex: 0 0 220px;"></div>
+    </div>
+
+    <sc-for list="{{ habits }}" as="habit" hint-placeholder-count="9">
+      <div style="display: flex; align-items: center; border-bottom: 1px solid #e4e1e1; min-height: 30px;">
+        <div style="flex: 0 0 300px; font-size: 14px; padding-right: 15px;">{{ habit.name }}</div>
+        <sc-for list="{{ habit.weeks }}" as="wk" hint-placeholder-count="5">
+          <div style="{{ wk.cellRowStyle }}">
+            <sc-for list="{{ wk.cells }}" as="cell" hint-placeholder-count="7">
+              <div style="{{ cell.style }}"></div>
+            </sc-for>
+          </div>
+        </sc-for>
+        <div style="flex: 0 0 54px; text-align: center; font-size: 13px; color: #444141;">{{ habit.goal }}</div>
+        <div style="flex: 0 0 220px; padding-left: 15px; display: flex; align-items: center; gap: 10px;">
+          <div style="flex: 1 1 auto; height: 8px; background: #e4e1e1; border-radius: 1px; overflow: hidden;">
+            <div style="{{ habit.barStyle }}"></div>
+          </div>
+          <div style="flex: 0 0 62px; font-size: 12px; color: #444141; text-align: right;">{{ habit.count }}</div>
+        </div>
+      </div>
+    </sc-for>
+
+    <div style="display: flex; gap: 40px; margin-top: 44px; align-items: flex-start;">
+      <div style="flex: 1 1 auto; min-width: 0;">
+        <div style="font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #605d5d; margin-bottom: 18px;">Weekly progress</div>
+        <div style="display: flex; gap: 26px;">
+          <sc-for list="{{ weeklyRings }}" as="ring" hint-placeholder-count="5">
+            <div style="flex: 1 1 0; min-width: 0; text-align: center;">
+              <div style="position: relative; width: 104px; height: 104px; margin: 0 auto;">
+                <div style="{{ ring.ringStyle }}"></div>
+                <div style="position: absolute; inset: 11px; border-radius: 50%; background: #f3f2f2; display: flex; align-items: center; justify-content: center; font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 25px;">{{ ring.pctLabel }}</div>
+              </div>
+              <div style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #605d5d; margin-top: 14px;">{{ ring.label }}</div>
+              <div style="font-size: 13px; color: #444141; margin-top: 5px;">{{ ring.detail }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="flex: 0 0 260px;">
+        <div style="font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #605d5d; margin-bottom: 18px;">Notes</div>
+        <div style="display: flex; flex-direction: column; gap: 9px; font-size: 14px; color: #201e1d;">
+          <div style="border-bottom: 1px solid #e4e1e1; padding-bottom: 8px;">Mom&rsquo;s birthday &mdash; the 14th</div>
+          <div style="border-bottom: 1px solid #e4e1e1; padding-bottom: 8px;">Check quarterly goals</div>
+          <div style="border-bottom: 1px solid #e4e1e1; padding-bottom: 8px;">Meeting prep, Thursday</div>
+          <div style="border-bottom: 1px solid #e4e1e1; padding-bottom: 8px;">Friend&rsquo;s gift</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 44px;">
+      <div style="display: flex; align-items: baseline; gap: 20px; margin-bottom: 18px;">
+        <div style="font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #605d5d;">Weekly habits</div>
+        <div style="font-size: 13px; color: #7d7979;">9 of 11 completed</div>
+      </div>
+      <div style="display: flex; gap: 20px;">
+        <sc-for list="{{ weeklyHabits }}" as="col" hint-placeholder-count="5">
+          <div style="flex: 1 1 0; min-width: 0;">
+            <div style="{{ col.headStyle }}">{{ col.label }}</div>
+            <div style="display: flex; flex-direction: column; gap: 0;">
+              <sc-for list="{{ col.items }}" as="item" hint-placeholder-count="3">
+                <div style="display: flex; align-items: center; gap: 10px; padding: 8px 2px; border-bottom: 1px solid #e4e1e1; font-size: 14px;">
+                  <div style="{{ item.boxStyle }}"></div>
+                  <div>{{ item.text }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+  </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isAnnual }}" hint-placeholder-val="{{ false }}">
+  <div style="overflow-x: auto; padding-bottom: 10px;">
+  <div style="min-width: 1100px;">
+
+    <div style="display: flex; gap: 40px; align-items: flex-end; margin-bottom: 34px;">
+      <div style="flex: 0 0 300px;">
+        <div style="font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #605d5d; margin-bottom: 15px;">Year</div>
+        <div style="font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 40px; line-height: 1;">2025</div>
+      </div>
+      <div style="flex: 1 1 auto; display: flex; gap: 50px;">
+        <div>
+          <div style="font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #605d5d; margin-bottom: 10px;">Checks logged</div>
+          <div style="font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 34px; line-height: 1;">2,414</div>
+        </div>
+        <div>
+          <div style="font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #605d5d; margin-bottom: 10px;">Best month</div>
+          <div style="font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 34px; line-height: 1;">March</div>
+        </div>
+        <div>
+          <div style="font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #605d5d; margin-bottom: 10px;">Longest streak</div>
+          <div style="font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 34px; line-height: 1;">64 days</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: flex-end; border-bottom: 1px solid #201e1d; padding-bottom: 7px;">
+      <div style="flex: 0 0 300px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #605d5d;">Habit</div>
+      <sc-for list="{{ months }}" as="m" hint-placeholder-count="12">
+        <div style="flex: 1 1 0; min-width: 0; text-align: center; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #605d5d;">{{ m }}</div>
+      </sc-for>
+      <div style="flex: 0 0 130px; text-align: right; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #605d5d;">Year</div>
+    </div>
+
+    <sc-for list="{{ annualRows }}" as="row" hint-placeholder-count="9">
+      <div style="display: flex; align-items: center; border-bottom: 1px solid #e4e1e1; min-height: 40px;">
+        <div style="flex: 0 0 300px; font-size: 14px; padding-right: 15px;">{{ row.name }}</div>
+        <sc-for list="{{ row.cells }}" as="cell" hint-placeholder-count="12">
+          <div style="flex: 1 1 0; min-width: 0; padding: 0 3px;">
+            <div style="{{ cell.style }}">{{ cell.label }}</div>
+          </div>
+        </sc-for>
+        <div style="flex: 0 0 130px; text-align: right; font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 16px;">{{ row.total }}</div>
+      </div>
+    </sc-for>
+
+    <div style="display: flex; align-items: center; gap: 14px; margin-top: 24px; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #605d5d;">
+      <div>Rate</div>
+      <div style="display: flex; gap: 2px;">
+        <sc-for list="{{ legend }}" as="sw" hint-placeholder-count="6">
+          <div style="{{ sw.style }}"></div>
+        </sc-for>
+      </div>
+      <div>0 &rarr; 100%</div>
+    </div>
+
+    <div style="margin-top: 44px; display: flex; gap: 40px; flex-wrap: wrap;">
+      <div style="flex: 1 1 320px; min-width: 0;">
+        <div style="font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #605d5d; margin-bottom: 18px;">Quarterly rhythm</div>
+        <div style="display: flex; gap: 26px;">
+          <sc-for list="{{ quarters }}" as="q" hint-placeholder-count="4">
+            <div style="flex: 1 1 0; min-width: 0; text-align: center;">
+              <div style="position: relative; width: 100px; height: 100px; margin: 0 auto;">
+                <div style="{{ q.ringStyle }}"></div>
+                <div style="position: absolute; inset: 11px; border-radius: 50%; background: #f3f2f2; display: flex; align-items: center; justify-content: center; font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 24px;">{{ q.pctLabel }}</div>
+              </div>
+              <div style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #605d5d; margin-top: 14px;">{{ q.label }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="flex: 0 0 260px;">
+        <div style="font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #605d5d; margin-bottom: 18px;">Year notes</div>
+        <div style="display: flex; flex-direction: column; gap: 9px; font-size: 14px;">
+          <div style="border-bottom: 1px solid #e4e1e1; padding-bottom: 8px;">Reset goals every quarter</div>
+          <div style="border-bottom: 1px solid #e4e1e1; padding-bottom: 8px;">August travel &mdash; expect a dip</div>
+          <div style="border-bottom: 1px solid #e4e1e1; padding-bottom: 8px;">Add two habits in January</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;view&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;monthly&quot;,&quot;annual&quot;],&quot;default&quot;:&quot;monthly&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Sheet&quot;},&quot;seed&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:7,&quot;min&quot;:1,&quot;max&quot;:40,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Sheet&quot;}}">
+const INK = { cyan: "#0088b0", magenta: "#d6006c" };
+const HABIT_NAMES = [
+  "Hydrate with 2.5 liters of water",
+  "30 minute workout",
+  "8-hour nightly sleep",
+  "5 servings of fruits and veggies",
+  "15 minute meditation",
+  "Read 20 pages",
+  "2 hour focused work",
+  "10 min daily walk",
+  "1-hour tech detox"
+];
+const GOALS = [31, 20, 31, 25, 30, 20, 25, 22, 24];
+const DOW = ["S", "M", "T", "W", "T", "F", "S"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const WEEKLY_ITEMS = [
+  ["Meal planning", "Schedule workouts", "Weekly to-do list"],
+  ["Try new recipes", "Declutter a space", "Creative time"],
+  ["Gratitude journal", "Learn new skills"],
+  ["Tech-free evenings", "Set monthly goals"],
+  ["Home cleaning"]
+];
+
+function rng(seed) {
+  let s = seed >>> 0;
+  return function () {
+    s = (s + 0x6d2b79f5) >>> 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+class Component extends DCLogic {
+  state = { view: null };
+
+  get view() {
+    return this.state.view || this.props.view || "monthly";
+  }
+
+  ring(pct, ink, thickness) {
+    const deg = Math.round(pct * 3.6);
+    return "position:absolute;inset:0;border-radius:50%;background:conic-gradient(" +
+      ink + " 0deg " + deg + "deg, #e4e1e1 " + deg + "deg 360deg);";
+  }
+
+  renderVals() {
+    const seed = this.props.seed || 7;
+    const rand = rng(seed);
+    const inkFor = (i) => (i % 2 === 0 ? INK.cyan : INK.magenta);
+
+    // Month grid — 31 days grouped into weeks of seven, Oct 2025 starts Wednesday.
+    const startDow = 3;
+    const weeks = [];
+    for (let w = 0; w < 5; w++) {
+      const days = [];
+      for (let d = 0; d < 7; d++) {
+        const n = w * 7 + d + 1;
+        if (n > 31) break;
+        days.push({ n: n, dow: DOW[(startDow + n - 1) % 7] });
+      }
+      if (!days.length) break;
+      const ink = inkFor(w);
+      weeks.push({
+        label: "Week " + (w + 1),
+        ink: ink,
+        days: days,
+        headStyle: "flex:0 0 " + (days.length * 24 + 12) + "px;padding:0 6px;text-align:center;" +
+          "font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:" + ink + ";",
+        cellRowStyle: "flex:0 0 " + (days.length * 24 + 12) + "px;display:flex;gap:2px;padding:0 6px;"
+      });
+    }
+
+    const habits = HABIT_NAMES.map((name, hi) => {
+      const goal = GOALS[hi];
+      let done = 0;
+      const hWeeks = weeks.map((wk) => {
+        const cells = wk.days.map(() => {
+          const on = rand() < 0.82;
+          if (on) done++;
+          return {
+            style: "width:22px;height:16px;border-radius:1px;" +
+              (on ? "background:" + wk.ink + ";border:1px solid " + wk.ink + ";"
+                  : "background:transparent;border:1px solid #d7d3d3;")
+          };
+        });
+        return { cells: cells, cellRowStyle: wk.cellRowStyle };
+      });
+      const capped = Math.min(done, goal);
+      const pct = Math.round((capped / goal) * 100);
+      return {
+        name: name,
+        goal: goal,
+        count: capped + " / " + goal,
+        weeks: hWeeks,
+        barStyle: "width:" + Math.min(pct, 100) + "%;height:100%;background:" +
+          (hi % 2 === 0 ? INK.cyan : INK.magenta) + ";"
+      };
+    });
+
+    const bars = [];
+    for (let i = 0; i < 31; i++) {
+      const h = 34 + Math.round(rand() * 58);
+      bars.push({ style: "flex:1 1 0;min-width:0;height:" + h + "px;background:" + INK.cyan + ";opacity:0.82;border-radius:1px;" });
+    }
+
+    const weeklyPcts = [76, 71, 73, 67, 78];
+    const weeklyRings = weeklyPcts.map((p, i) => ({
+      label: "Week " + (i + 1),
+      pctLabel: p + "%",
+      detail: Math.round((p / 100) * 63) + " of 63 checks",
+      ringStyle: this.ring(p, inkFor(i))
+    }));
+
+    const weeklyHabits = WEEKLY_ITEMS.map((items, i) => {
+      const ink = inkFor(i);
+      return {
+        label: "Week " + (i + 1),
+        headStyle: "border-bottom:1px solid " + ink + ";padding-bottom:7px;margin-bottom:2px;" +
+          "font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:" + ink + ";",
+        items: items.map((t, j) => ({
+          text: t,
+          boxStyle: "flex:0 0 14px;width:14px;height:14px;border-radius:1px;" +
+            (j < 2 ? "background:" + ink + ";border:1px solid " + ink + ";"
+                   : "background:transparent;border:1px solid #d7d3d3;")
+        }))
+      };
+    });
+
+    // Annual heatmap — one row per habit, twelve month columns.
+    const ramp = ["#f8f4f4", "#e9f8ff", "#cbeeff", "#99e0ff", "#62c5ee", "#38a6cf", "#006786"];
+    const stepIdx = (p) => Math.min(ramp.length - 1, Math.floor((p / 100) * (ramp.length - 1) + 0.5));
+    const arand = rng(seed * 31 + 5);
+    const annualRows = HABIT_NAMES.map((name) => {
+      let sum = 0;
+      const cells = MONTHS.map(() => {
+        const p = 42 + Math.round(arand() * 56);
+        sum += p;
+        const idx = stepIdx(p);
+        return {
+          label: p + "%",
+          style: "height:26px;display:flex;align-items:center;justify-content:center;border-radius:1px;" +
+            "font-size:11px;background:" + ramp[idx] + ";color:" + (idx >= 6 ? "#f8f4f4" : "#201e1d") + ";"
+        };
+      });
+      return { name: name, cells: cells, total: Math.round(sum / 12) + "%" };
+    });
+
+    const legend = ramp.map((c) => ({
+      style: "width:26px;height:12px;border-radius:1px;background:" + c + ";border:1px solid #e4e1e1;"
+    }));
+
+    const quarters = [
+      { label: "Q1", p: 81 },
+      { label: "Q2", p: 74 },
+      { label: "Q3", p: 63 },
+      { label: "Q4", p: 79 }
+    ].map((q, i) => ({
+      label: q.label,
+      pctLabel: q.p + "%",
+      ringStyle: this.ring(q.p, inkFor(i))
+    }));
+
+    const btn = (on) =>
+      "font-family:'Source Serif 4',Georgia,serif;font-size:14px;padding:8px 16px;border-radius:2px;cursor:pointer;" +
+      (on ? "background:" + INK.cyan + ";color:#f8f4f4;border:1px solid " + INK.cyan + ";"
+          : "background:transparent;color:#444141;border:1px solid transparent;");
+
+    const monthly = this.view === "monthly";
+    return {
+      isMonthly: monthly,
+      isAnnual: !monthly,
+      showMonthly: () => this.setState({ view: "monthly" }),
+      showAnnual: () => this.setState({ view: "annual" }),
+      monthlyBtnStyle: btn(monthly),
+      annualBtnStyle: btn(!monthly),
+      datelineLeft: monthly ? "October 2025 \u00b7 monthly sheet" : "2025 \u00b7 annual overview",
+      weeks: weeks,
+      habits: habits,
+      bars: bars,
+      weeklyRings: weeklyRings,
+      weeklyHabits: weeklyHabits,
+      months: MONTHS,
+      annualRows: annualRows,
+      legend: legend,
+      quarters: quarters,
+      mainRingStyle: this.ring(89, INK.cyan)
+    };
+  }
+}
+
+</script>
+</body>
+</html>
