@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
 <style>
-  :root { --cyan:#0088b0; --magenta:#d6006c; --ink:#201e1d; --sub:#605d5d; --sub2:#7d7979; --body:#444141; --line:#e4e1e1; --line2:#d7d3d3; --bg:#f3f2f2; --panel:#f8f4f4; }
+  :root { --cyan:#0088b0; --magenta:#d6006c; --today:#b5790a; --today-bg:#fbedcd; --ink:#201e1d; --sub:#605d5d; --sub2:#7d7979; --body:#444141; --line:#e4e1e1; --line2:#d7d3d3; --bg:#f3f2f2; --panel:#f8f4f4; }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Source Serif 4", Georgia, serif; }
   button { font-family: inherit; }
@@ -58,9 +58,12 @@
   .daysrow { display: flex; align-items: stretch; border-bottom: 1px solid var(--line2); padding: 6px 0; }
   .daysrow .namecol { flex: 0 0 300px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sub2); }
   .daysrow .wkdays { display: flex; padding: 0 6px; gap: 2px; }
-  .daysrow .daynum { width: 22px; text-align: center; }
+  .daysrow .daynum { width: 22px; text-align: center; border-radius: 3px; }
+  .daysrow .daynum.today { background: var(--today-bg); }
   .daysrow .dow { font-size: 10px; color: #9b9797; letter-spacing: 0.04em; }
+  .daysrow .daynum.today .dow { color: var(--today); }
   .daysrow .n { font-size: 12px; color: var(--body); }
+  .daysrow .daynum.today .n { color: var(--today); font-weight: 600; }
   .habit-row { display: flex; align-items: center; border-bottom: 1px solid var(--line); min-height: 34px; }
   .habit-row .namecol { flex: 0 0 300px; font-size: 14px; padding-right: 15px; display: flex; align-items: center; gap: 6px; }
   .habit-row .namecol .name { outline: none; border-bottom: 1px dashed transparent; flex: 1 1 auto; }
@@ -274,6 +277,8 @@
     var startDow = new Date(t.y, t.m, 1).getDay();
     var weeks = weeksOf(dim);
     var mdata = ensureMonth(mk);
+    var today = todayParts();
+    var isCurrentMonth = t.y === today.y && t.m === today.m;
 
     var weekMeta = weeks.map(function (days, wi) {
       var ink = inkFor(wi);
@@ -308,7 +313,7 @@
     var bars = [];
     for (var day = 1; day <= dim; day++) {
       var frac = STATE.habits.length ? (dayCompletion[day] || 0) / STATE.habits.length : 0;
-      bars.push({ day: day, height: Math.round(8 + frac * 84) });
+      bars.push({ day: day, height: Math.round(8 + frac * 84), isToday: isCurrentMonth && day === today.d });
     }
 
     var weeklyRings = weekMeta.map(function (wk, wi) {
@@ -324,7 +329,8 @@
     return {
       y: t.y, m: t.m, dim: dim, startDow: startDow, weeks: weekMeta, habits: habits,
       totalGoal: totalGoal, totalDone: totalDone, overallPct: overallPct, checksLeft: checksLeft,
-      bars: bars, weeklyRings: weeklyRings, notes: mdata.notes
+      bars: bars, weeklyRings: weeklyRings, notes: mdata.notes,
+      isCurrentMonth: isCurrentMonth, todayNum: today.d
     };
   }
 
@@ -358,7 +364,7 @@
     html += '<div class="row-top">';
     html += '<div class="month-box"><div class="label">Month</div><div class="month-name">' + esc(MONTH_NAMES[data.m]) + '</div><div class="month-year">' + data.y + '</div></div>';
     html += '<div class="bars"><div class="label">Daily progress</div><div class="bar-chart">';
-    data.bars.forEach(function (b) { html += '<div style="height:' + b.height + 'px;"></div>'; });
+    data.bars.forEach(function (b) { html += '<div style="height:' + b.height + 'px;' + (b.isToday ? 'background:var(--today);opacity:1;' : '') + '"></div>'; });
     html += '</div><div class="bar-labels"><div>' + esc(MONTH_NAMES[data.m].slice(0,3).toUpperCase()) + ' 1</div><div>' + esc(MONTH_NAMES[data.m].slice(0,3).toUpperCase()) + ' ' + data.dim + '</div></div></div>';
     html += '<div class="ring-block"><div class="ring"><div class="fill" style="' + ring(data.overallPct, INK.cyan) + '"></div><div class="hole">' + data.overallPct + '%</div></div>';
     html += '<div><div class="label">Completed</div><div class="big-num">' + data.totalDone + ' / ' + data.totalGoal + '</div><div class="sub-line">' + data.checksLeft + ' checks left this month</div></div></div>';
@@ -374,7 +380,8 @@
       html += '<div class="wkdays" style="' + wk.cellRowStyle + '">';
       wk.days.forEach(function (day) {
         var dow = DOW[(data.startDow + day - 1) % 7];
-        html += '<div class="daynum"><div class="dow">' + dow + '</div><div class="n">' + day + '</div></div>';
+        var isToday = data.isCurrentMonth && day === data.todayNum;
+        html += '<div class="daynum' + (isToday ? ' today' : '') + '"><div class="dow">' + dow + '</div><div class="n">' + day + '</div></div>';
       });
       html += '</div>';
     });
@@ -397,7 +404,9 @@
         html += '<div class="wkcells" style="' + wk.cellRowStyle + '">';
         wk.days.forEach(function (day) {
           var on = !!h.checks[day];
+          var isToday = data.isCurrentMonth && day === data.todayNum;
           var style = on ? "background:" + wk.ink + ";border:1px solid " + wk.ink + ";" : "background:transparent;border:1px solid var(--line2);";
+          if (isToday) style += "box-shadow:inset 0 0 0 2px var(--today);";
           html += '<button class="cellbtn" style="' + style + '" data-action="toggle-check" data-habit="' + h.id + '" data-day="' + day + '" aria-label="' + esc(h.name) + ' day ' + day + (on ? ' done' : '') + '"></button>';
         });
         html += '</div>';
