@@ -1,11 +1,24 @@
 # Habit Tracker
 
-A habit tracker interface built with Claude Design's canvas editor.
+An editable habit tracker: check off daily habits on a monthly grid, track weekly
+habits, jot notes, and see an annual overview — all saved locally in your browser
+(no backend, no account).
 
-- `Habit Tracker.dc.html` — the source design canvas (artboard).
-- `dist/index.html` — the bundled, self-contained static build that gets deployed.
-- `uploads/` — reference images used while designing.
-- `_ds/` — the design system the canvas was built against.
+- `dist/index.html` — the live app. Plain HTML/CSS/JS, no dependencies, no build step.
+  Data is stored in the browser's `localStorage`, so it's private to whatever device/
+  browser you use the tracker from.
+- `Habit Tracker.dc.html` — the original static design mockup this was visually based
+  on, built with Claude Design's canvas editor (kept for reference; not deployed).
+- `uploads/`, `_ds/` — design reference assets from that original mockup.
+
+## Features
+
+- Click a day cell to check a habit off; goals, progress bars and rings recompute live.
+- Add, rename, or remove daily habits and their goals.
+- Weekly habit checklists per week-of-month, editable per week.
+- Editable notes (monthly and yearly).
+- Month navigation — each month's data is kept separately.
+- Annual overview aggregated from whatever months you've filled in.
 
 ## Deploy
 
