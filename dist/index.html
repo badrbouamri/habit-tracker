@@ -21,6 +21,8 @@
   .toggle { display: flex; gap: 5px; padding: 4px; border: 1px solid var(--line2); border-radius: 2px; background: var(--panel); }
   .toggle button { font-size: 14px; padding: 8px 16px; border-radius: 2px; cursor: pointer; background: transparent; color: var(--body); border: 1px solid transparent; }
   .toggle button.active { background: var(--cyan); color: var(--panel); border-color: var(--cyan); }
+  .toggles-wrap { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+  .mode-toggle button.active { background: var(--magenta); color: var(--panel); border-color: var(--magenta); }
   .rule-thick { border-top: 3px solid var(--ink); margin-bottom: 2px; }
   .dateline { border-top: 1px solid var(--ink); display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 8px 0 30px; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--sub); }
   .dateline .nav { display: flex; align-items: center; gap: 10px; }
@@ -63,6 +65,11 @@
   .habit-row .namecol { flex: 0 0 300px; font-size: 14px; padding-right: 15px; display: flex; align-items: center; gap: 6px; }
   .habit-row .namecol .name { outline: none; border-bottom: 1px dashed transparent; flex: 1 1 auto; }
   .habit-row .namecol .name:hover, .habit-row .namecol .name:focus { border-bottom-color: var(--line2); }
+  .name-input, .txt-input { flex: 1 1 auto; min-width: 0; border: 1px solid var(--line2); border-radius: 2px; padding: 3px 6px; font-family: inherit; font-size: 14px; background: transparent; color: var(--ink); }
+  .name-input:focus, .txt-input:focus { border-color: var(--magenta); }
+  .reorder { flex: 0 0 16px; width: 16px; height: 16px; padding: 0; border: 1px solid var(--line2); background: transparent; border-radius: 2px; cursor: pointer; font-size: 10px; line-height: 1; color: var(--body); }
+  .reorder:hover:not(:disabled) { border-color: var(--magenta); color: var(--magenta); }
+  .reorder:disabled { opacity: .3; cursor: default; }
   .habit-row .wkcells { display: flex; padding: 0 6px; gap: 2px; }
   .cellbtn { width: 22px; height: 16px; border-radius: 1px; padding: 0; cursor: pointer; }
   .habit-row .goalcol { flex: 0 0 54px; text-align: center; }
@@ -74,6 +81,7 @@
   .progcol .count { flex: 0 0 62px; font-size: 12px; color: var(--body); text-align: right; }
   .rmbtn { flex: 0 0 16px; width: 16px; height: 16px; border: none; background: transparent; color: var(--sub2); cursor: pointer; font-size: 15px; line-height: 1; opacity: 0; transition: opacity .1s; }
   .habit-row:hover .rmbtn, .note-row:hover .rmbtn, .item-row:hover .rmbtn { opacity: 1; }
+  .rmbtn.always { opacity: 1; }
   .rmbtn:hover { color: var(--magenta); }
   .addrow { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
   .addrow input[type=text] { border: 1px solid var(--line2); border-radius: 2px; padding: 5px 8px; font-size: 13px; font-family: inherit; background: transparent; color: var(--ink); }
@@ -129,11 +137,17 @@
     <div>
       <div class="kicker">Your habit sheet</div>
       <h1>Habit Tracker</h1>
-      <div class="tagline">Click a box to check off a habit. Everything saves automatically on this device.</div>
+      <div class="tagline">Click a box to check off a habit. Switch to "Edit habits" to rename, reorder, or add habits — everything saves automatically on this device.</div>
     </div>
-    <div class="toggle" id="viewToggle">
-      <button data-view="monthly">Monthly sheet</button>
-      <button data-view="annual">Annual overview</button>
+    <div class="toggles-wrap">
+      <div class="toggle" id="viewToggle">
+        <button data-view="monthly">Monthly sheet</button>
+        <button data-view="annual">Annual overview</button>
+      </div>
+      <div class="toggle mode-toggle" id="modeToggle">
+        <button data-mode="view">See result</button>
+        <button data-mode="edit">Edit habits</button>
+      </div>
     </div>
   </div>
 
@@ -193,11 +207,13 @@
       months: months,
       yearNotes: ["Reset goals every quarter"],
       view: "monthly",
+      mode: "view",
       currentMonth: mk
     };
   }
 
   var STATE = load();
+  if (!STATE.mode) STATE.mode = "view";
 
   function load() {
     try {
@@ -317,6 +333,9 @@
     document.querySelectorAll("#viewToggle button").forEach(function (b) {
       b.classList.toggle("active", b.getAttribute("data-view") === STATE.view);
     });
+    document.querySelectorAll("#modeToggle button").forEach(function (b) {
+      b.classList.toggle("active", b.getAttribute("data-mode") === STATE.mode);
+    });
     var monthly = STATE.view === "monthly";
     document.getElementById("monthNav").style.display = monthly ? "flex" : "none";
     document.getElementById("datelineTextAnnual").style.display = monthly ? "none" : "inline";
@@ -333,6 +352,7 @@
 
   function renderMonthly() {
     var data = monthlyData(STATE.currentMonth);
+    var editMode = STATE.mode === "edit";
     var html = '<div class="scroller"><div class="sheet">';
 
     html += '<div class="row-top">';
@@ -360,10 +380,19 @@
     });
     html += '<div class="goalcol"></div><div class="progcol"></div></div>';
 
-    data.habits.forEach(function (h) {
+    data.habits.forEach(function (h, hi) {
       var pct = h.goal ? Math.round((h.capped / h.goal) * 100) : 0;
       html += '<div class="habit-row" data-habit="' + h.id + '">';
-      html += '<div class="namecol"><span class="name" contenteditable="true" data-action="rename-habit" data-id="' + h.id + '">' + esc(h.name) + '</span><button class="rmbtn" data-action="remove-habit" data-id="' + h.id + '" title="Remove habit">×</button></div>';
+      html += '<div class="namecol">';
+      if (editMode) {
+        html += '<button class="reorder" data-action="move-habit-up" data-id="' + h.id + '" title="Move up"' + (hi === 0 ? ' disabled' : '') + '>&uarr;</button>';
+        html += '<button class="reorder" data-action="move-habit-down" data-id="' + h.id + '" title="Move down"' + (hi === data.habits.length - 1 ? ' disabled' : '') + '>&darr;</button>';
+        html += '<input type="text" class="name-input" value="' + esc(h.name) + '" data-action="rename-habit" data-id="' + h.id + '">';
+        html += '<button class="rmbtn always" data-action="remove-habit" data-id="' + h.id + '" title="Remove habit">×</button>';
+      } else {
+        html += '<span class="name">' + esc(h.name) + '</span>';
+      }
+      html += '</div>';
       data.weeks.forEach(function (wk) {
         html += '<div class="wkcells" style="' + wk.cellRowStyle + '">';
         wk.days.forEach(function (day) {
@@ -373,12 +402,14 @@
         });
         html += '</div>';
       });
-      html += '<div class="goalcol"><input type="number" min="1" value="' + h.goal + '" data-action="set-goal" data-id="' + h.id + '"></div>';
-      html += '<div class="progcol"><div class="track"><div class="fill" style="width:' + Math.min(pct,100) + '%;background:' + (data.habits.indexOf(h) % 2 === 0 ? INK.cyan : INK.magenta) + ';"></div></div><div class="count">' + h.capped + ' / ' + h.goal + '</div></div>';
+      html += '<div class="goalcol">' + (editMode ? '<input type="number" min="1" value="' + h.goal + '" data-action="set-goal" data-id="' + h.id + '">' : h.goal) + '</div>';
+      html += '<div class="progcol"><div class="track"><div class="fill" style="width:' + Math.min(pct,100) + '%;background:' + (hi % 2 === 0 ? INK.cyan : INK.magenta) + ';"></div></div><div class="count">' + h.capped + ' / ' + h.goal + '</div></div>';
       html += '</div>';
     });
 
-    html += '<div class="addrow"><input type="text" name="name" placeholder="New habit name" id="newHabitName"><input type="text" name="goal" placeholder="Goal" id="newHabitGoal"><button data-action="add-habit">+ Add habit</button></div>';
+    if (editMode) {
+      html += '<div class="addrow"><input type="text" name="name" placeholder="New habit name" id="newHabitName"><input type="text" name="goal" placeholder="Goal" id="newHabitGoal"><button data-action="add-habit">+ Add habit</button></div>';
+    }
 
     html += '<div class="lower">';
     html += '<div class="weekly-rings"><div class="label">Weekly progress</div><div class="ring-row">';
@@ -389,9 +420,10 @@
 
     html += '<div class="notes-block"><div class="label">Notes</div>';
     data.notes.forEach(function (n, i) {
-      html += '<div class="note-row"><textarea rows="1" data-action="edit-note" data-idx="' + i + '">' + esc(n) + '</textarea><button class="rmbtn" data-action="remove-note" data-idx="' + i + '" title="Remove note">×</button></div>';
+      html += '<div class="note-row"><textarea rows="1"' + (editMode ? ' data-action="edit-note" data-idx="' + i + '"' : ' readonly') + '>' + esc(n) + '</textarea>' + (editMode ? '<button class="rmbtn always" data-action="remove-note" data-idx="' + i + '" title="Remove note">×</button>' : '') + '</div>';
     });
-    html += '<button class="addnote" data-action="add-note">+ Add note</button></div>';
+    if (editMode) html += '<button class="addnote" data-action="add-note">+ Add note</button>';
+    html += '</div>';
     html += '</div>';
 
     html += '<div class="weekly-block"><div class="weekly-head"><div class="title">Weekly habits</div><div class="stat" id="weeklyStat"></div></div><div class="weekly-cols">';
@@ -402,13 +434,22 @@
       var ink = wk.ink;
       html += '<div class="weekly-col"><div class="colhead" style="border-color:' + ink + ';color:' + ink + ';">Week ' + (wk.idx + 1) + '</div>';
       slot.forEach(function (item) {
-        var key = wk.idx + ":" + item.id;
         var done = !!(mdata.weeklyDone[wk.idx] && mdata.weeklyDone[wk.idx][item.id]);
         totalItems++; if (done) doneItems++;
         var boxStyle = done ? "background:" + ink + ";border:1px solid " + ink + ";" : "background:transparent;border:1px solid var(--line2);";
-        html += '<div class="item-row"><button class="box" style="' + boxStyle + '" data-action="toggle-weekly" data-week="' + wk.idx + '" data-item="' + item.id + '"></button><span class="txt" contenteditable="true" data-action="rename-weekly" data-slot="' + wk.idx + '" data-item="' + item.id + '">' + esc(item.text) + '</span><button class="rmbtn" data-action="remove-weekly-item" data-slot="' + wk.idx + '" data-item="' + item.id + '">×</button></div>';
+        html += '<div class="item-row"><button class="box" style="' + boxStyle + '" data-action="toggle-weekly" data-week="' + wk.idx + '" data-item="' + item.id + '"></button>';
+        if (editMode) {
+          html += '<input type="text" class="txt-input" value="' + esc(item.text) + '" data-action="rename-weekly" data-slot="' + wk.idx + '" data-item="' + item.id + '">';
+          html += '<button class="rmbtn always" data-action="remove-weekly-item" data-slot="' + wk.idx + '" data-item="' + item.id + '">×</button>';
+        } else {
+          html += '<span class="txt">' + esc(item.text) + '</span>';
+        }
+        html += '</div>';
       });
-      html += '<div class="additem"><input type="text" placeholder="Add item" id="newItem' + wk.idx + '"><button data-action="add-weekly-item" data-slot="' + wk.idx + '">+</button></div></div>';
+      if (editMode) {
+        html += '<div class="additem"><input type="text" placeholder="Add item" id="newItem' + wk.idx + '"><button data-action="add-weekly-item" data-slot="' + wk.idx + '">+</button></div>';
+      }
+      html += '</div>';
     });
     html += '</div></div>';
 
@@ -493,6 +534,7 @@
 
   function renderAnnual() {
     var data = annualData();
+    var editMode = STATE.mode === "edit";
     var html = '<div class="scroller"><div class="sheet annual">';
 
     html += '<div class="row-top" style="align-items:flex-end;">';
@@ -533,9 +575,10 @@
 
     html += '<div class="notes-block"><div class="label">Year notes</div>';
     STATE.yearNotes.forEach(function (n, i) {
-      html += '<div class="note-row"><textarea rows="1" data-action="edit-year-note" data-idx="' + i + '">' + esc(n) + '</textarea><button class="rmbtn" data-action="remove-year-note" data-idx="' + i + '" title="Remove note">×</button></div>';
+      html += '<div class="note-row"><textarea rows="1"' + (editMode ? ' data-action="edit-year-note" data-idx="' + i + '"' : ' readonly') + '>' + esc(n) + '</textarea>' + (editMode ? '<button class="rmbtn always" data-action="remove-year-note" data-idx="' + i + '" title="Remove note">×</button>' : '') + '</div>';
     });
-    html += '<button class="addnote" data-action="add-year-note">+ Add note</button></div>';
+    if (editMode) html += '<button class="addnote" data-action="add-year-note">+ Add note</button>';
+    html += '</div>';
     html += '</div>';
 
     html += '</div></div>';
@@ -572,6 +615,17 @@
 
   function removeHabit(id) {
     STATE.habits = STATE.habits.filter(function (h) { return h.id !== id; });
+    save(); render();
+  }
+
+  function moveHabit(id, delta) {
+    var idx = STATE.habits.findIndex(function (h) { return h.id === id; });
+    if (idx < 0) return;
+    var newIdx = idx + delta;
+    if (newIdx < 0 || newIdx >= STATE.habits.length) return;
+    var tmp = STATE.habits[idx];
+    STATE.habits[idx] = STATE.habits[newIdx];
+    STATE.habits[newIdx] = tmp;
     save(); render();
   }
 
@@ -645,6 +699,13 @@
     save(); render();
   });
 
+  document.getElementById("modeToggle").addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-mode]");
+    if (!btn) return;
+    STATE.mode = btn.getAttribute("data-mode");
+    save(); render();
+  });
+
   document.getElementById("monthNav").addEventListener("click", function (e) {
     var btn = e.target.closest("button[data-action]");
     if (!btn) return;
@@ -658,6 +719,8 @@
     var action = btn.getAttribute("data-action");
     if (action === "toggle-check") toggleCheck(btn.getAttribute("data-habit"), parseInt(btn.getAttribute("data-day"), 10));
     else if (action === "remove-habit") removeHabit(btn.getAttribute("data-id"));
+    else if (action === "move-habit-up") moveHabit(btn.getAttribute("data-id"), -1);
+    else if (action === "move-habit-down") moveHabit(btn.getAttribute("data-id"), 1);
     else if (action === "add-habit") {
       var nameEl = document.getElementById("newHabitName"), goalEl = document.getElementById("newHabitGoal");
       addHabit(nameEl.value, goalEl.value);
@@ -679,9 +742,7 @@
     var t = e.target;
     var action = t.getAttribute && t.getAttribute("data-action");
     if (!action) return;
-    if (action === "rename-habit") renameHabit(t.getAttribute("data-id"), t.textContent);
-    else if (action === "rename-weekly") renameWeeklyItem(t.getAttribute("data-slot"), t.getAttribute("data-item"), t.textContent);
-    else if (action === "edit-note") editNote(parseInt(t.getAttribute("data-idx"), 10), t.value);
+    if (action === "edit-note") editNote(parseInt(t.getAttribute("data-idx"), 10), t.value);
     else if (action === "edit-year-note") editYearNote(parseInt(t.getAttribute("data-idx"), 10), t.value);
   });
 
@@ -689,6 +750,8 @@
     var t = e.target;
     var action = t.getAttribute && t.getAttribute("data-action");
     if (action === "set-goal") setGoal(t.getAttribute("data-id"), t.value);
+    else if (action === "rename-habit") renameHabit(t.getAttribute("data-id"), t.value);
+    else if (action === "rename-weekly") renameWeeklyItem(t.getAttribute("data-slot"), t.getAttribute("data-item"), t.value);
   });
 
   document.getElementById("app").addEventListener("input", function (e) {
@@ -699,7 +762,7 @@
   document.getElementById("app").addEventListener("keydown", function (e) {
     var t = e.target;
     if (e.key === "Enter") {
-      if (t.getAttribute && t.getAttribute("contenteditable") === "true") { e.preventDefault(); t.blur(); }
+      if (t.classList && (t.classList.contains("name-input") || t.classList.contains("txt-input"))) { e.preventDefault(); t.blur(); }
       else if (t.id === "newHabitName" || t.id === "newHabitGoal") { e.preventDefault(); document.getElementById("newHabitName").parentElement.querySelector('[data-action="add-habit"]').click(); }
       else if (t.id && t.id.indexOf("newItem") === 0) { e.preventDefault(); t.nextElementSibling.click(); }
     }
