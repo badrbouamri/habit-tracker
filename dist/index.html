@@ -132,6 +132,15 @@
   .legend-row { display: flex; align-items: center; gap: 14px; margin-top: 24px; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sub); }
   .swatch { width: 26px; height: 12px; border-radius: 1px; border: 1px solid var(--line); }
   .hint { font-size: 12px; color: var(--sub2); margin-top: 6px; }
+  .pomo { position: fixed; right: 20px; bottom: 20px; width: 160px; background: var(--panel); border: 1px solid var(--line2); border-radius: 4px; padding: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 50; }
+  .pomo-label { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--sub); }
+  .pomo-mode { font-size: 12px; color: var(--cyan); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.1em; }
+  .pomo.on-break .pomo-mode { color: var(--magenta); }
+  .pomo-time { font-weight: 600; font-size: 34px; margin: 6px 0 10px; font-variant-numeric: tabular-nums; }
+  .pomo-controls { display: flex; gap: 6px; margin-bottom: 8px; }
+  .pomo-controls button { flex: 1 1 0; border: 1px solid var(--line2); background: transparent; border-radius: 2px; padding: 6px 0; font-size: 12px; cursor: pointer; color: var(--body); font-family: inherit; }
+  .pomo-controls button:hover { border-color: var(--cyan); color: var(--cyan); }
+  .pomo-count { font-size: 11px; color: var(--sub2); }
 </style>
 </head>
 <body>
@@ -167,6 +176,17 @@
   </div>
 
   <div id="app"></div>
+
+  <div class="pomo" id="pomo">
+    <div class="pomo-label">Focus timer</div>
+    <div class="pomo-mode" id="pomoMode">Work</div>
+    <div class="pomo-time" id="pomoTime">25:00</div>
+    <div class="pomo-controls">
+      <button id="pomoToggle" data-action="pomo-toggle">Start</button>
+      <button data-action="pomo-reset">Reset</button>
+    </div>
+    <div class="pomo-count" id="pomoCount">0 pomodoros today</div>
+  </div>
 </div>
 
 <script>
@@ -700,6 +720,70 @@
     save(); render();
   }
 
+  // ---- Pomodoro focus timer ----
+  var WORK_SECONDS = 25 * 60, BREAK_SECONDS = 5 * 60;
+  var pomo = { remaining: WORK_SECONDS, running: false, mode: "work", timer: null };
+
+  function todayDateStr() {
+    var d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+
+  function ensurePomodoroDay() {
+    var t = todayDateStr();
+    if (!STATE.pomodoro || STATE.pomodoro.date !== t) {
+      STATE.pomodoro = { date: t, count: 0 };
+      save();
+    }
+  }
+
+  function formatClock(sec) {
+    var m = Math.floor(sec / 60), s = sec % 60;
+    return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+  }
+
+  function renderPomo() {
+    document.getElementById("pomoMode").textContent = pomo.mode === "work" ? "Work" : "Break";
+    document.getElementById("pomoTime").textContent = formatClock(pomo.remaining);
+    document.getElementById("pomoToggle").textContent = pomo.running ? "Pause" : "Start";
+    document.getElementById("pomo").classList.toggle("on-break", pomo.mode === "break");
+    ensurePomodoroDay();
+    var c = STATE.pomodoro.count;
+    document.getElementById("pomoCount").textContent = c + (c === 1 ? " pomodoro today" : " pomodoros today");
+  }
+
+  function pomoTick() {
+    pomo.remaining--;
+    if (pomo.remaining <= 0) {
+      if (pomo.mode === "work") {
+        ensurePomodoroDay();
+        STATE.pomodoro.count++;
+        save();
+        pomo.mode = "break";
+        pomo.remaining = BREAK_SECONDS;
+      } else {
+        pomo.mode = "work";
+        pomo.remaining = WORK_SECONDS;
+      }
+    }
+    renderPomo();
+  }
+
+  function pomoToggle() {
+    pomo.running = !pomo.running;
+    if (pomo.running) pomo.timer = setInterval(pomoTick, 1000);
+    else clearInterval(pomo.timer);
+    renderPomo();
+  }
+
+  function pomoReset() {
+    clearInterval(pomo.timer);
+    pomo.running = false;
+    pomo.mode = "work";
+    pomo.remaining = WORK_SECONDS;
+    renderPomo();
+  }
+
   // ---- Event delegation ----
   document.getElementById("viewToggle").addEventListener("click", function (e) {
     var btn = e.target.closest("button[data-view]");
@@ -777,9 +861,19 @@
     }
   });
 
+  document.getElementById("pomo").addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-action]");
+    if (!btn) return;
+    var action = btn.getAttribute("data-action");
+    if (action === "pomo-toggle") pomoToggle();
+    else if (action === "pomo-reset") pomoReset();
+  });
+
   ensureMonth(STATE.currentMonth);
+  ensurePomodoroDay();
   save();
   render();
+  renderPomo();
 })();
 </script>
 </body>
