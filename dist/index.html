@@ -146,10 +146,58 @@
   .pomo-controls button { flex: 1 1 0; border: 1px solid var(--line2); background: transparent; border-radius: 2px; padding: 6px 0; font-size: 12px; cursor: pointer; color: var(--body); font-family: inherit; }
   .pomo-controls button:hover { border-color: var(--cyan); color: var(--cyan); }
   .pomo-count { font-size: 11px; color: var(--sub2); }
+  .gate-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+  .gate-card { width: min(440px, 100%); background: var(--panel); border: 1px solid var(--line2); border-radius: 4px; padding: 36px; }
+  .gate-card h1 { font-size: 36px; margin: 6px 0 0; }
+  .gate-choices { display: flex; flex-direction: column; gap: 12px; margin-top: 22px; }
+  .gate-choice { text-align: left; border: 1px solid var(--line2); border-radius: 2px; padding: 16px; background: transparent; cursor: pointer; font-family: inherit; }
+  .gate-choice:hover { border-color: var(--cyan); }
+  .gate-choice-title { font-weight: 600; font-size: 16px; color: var(--ink); }
+  .gate-choice-sub { font-size: 13px; color: var(--sub); margin-top: 4px; }
+  .gate-field { display: block; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sub); margin-top: 16px; }
+  .gate-field input { display: block; width: 100%; margin-top: 6px; border: 1px solid var(--line2); border-radius: 2px; padding: 8px 10px; font-family: inherit; font-size: 14px; background: transparent; color: var(--ink); letter-spacing: normal; text-transform: none; }
+  .gate-field input:focus { border-color: var(--magenta); outline: none; }
+  .gate-error { color: var(--magenta); font-size: 13px; margin-top: 14px; }
+  .gate-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 24px; }
+  .gate-actions button[type=submit] { background: var(--cyan); color: var(--panel); border: 1px solid var(--cyan); border-radius: 2px; padding: 9px 18px; font-size: 13px; cursor: pointer; font-family: inherit; }
+  .gate-back { background: none; border: none; color: var(--sub); font-size: 13px; cursor: pointer; padding: 0; font-family: inherit; }
+  .gate-back:hover { color: var(--cyan); }
+  .profile-bar { font-size: 12px; color: var(--sub); }
+  .linklike { background: none; border: none; padding: 0; color: var(--cyan); cursor: pointer; font-family: inherit; font-size: inherit; text-decoration: underline; }
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="gate-overlay" id="gate">
+  <div class="gate-card">
+    <div class="kicker">Habit Tracker</div>
+    <h1>Welcome</h1>
+    <div id="gateStep1">
+      <div class="tagline">Who's signing in?</div>
+      <div class="gate-choices">
+        <button type="button" class="gate-choice" data-role="creator">
+          <div class="gate-choice-title">I'm the Creator</div>
+          <div class="gate-choice-sub">Access the original tracker with an access code</div>
+        </button>
+        <button type="button" class="gate-choice" data-role="guest">
+          <div class="gate-choice-title">Guest</div>
+          <div class="gate-choice-sub">Start a fresh tracker with your own habits</div>
+        </button>
+      </div>
+    </div>
+    <form id="gateForm" style="display:none;">
+      <div class="tagline" id="gateFormTitle"></div>
+      <label class="gate-field">Name<input type="text" id="gateName" autocomplete="name" required></label>
+      <label class="gate-field">Email<input type="email" id="gateEmail" autocomplete="email" required></label>
+      <label class="gate-field" id="gateCodeField" style="display:none;">Access code<input type="password" id="gateCode" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off"></label>
+      <div class="gate-error" id="gateError" style="display:none;"></div>
+      <div class="gate-actions">
+        <button type="button" class="gate-back" id="gateBack">&larr; Back</button>
+        <button type="submit">Enter</button>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="wrap" id="wrap" style="display:none;">
   <div class="top">
     <div>
       <div class="kicker">Your habit sheet</div>
@@ -157,6 +205,7 @@
       <div class="tagline">Click a box to check off a habit. Switch to "Edit habits" to rename, reorder, or add habits — everything saves automatically on this device.</div>
     </div>
     <div class="toggles-wrap">
+      <div class="profile-bar" id="profileBar"></div>
       <div class="toggle" id="viewToggle">
         <button data-view="monthly">Monthly sheet</button>
         <button data-view="annual">Annual overview</button>
@@ -247,17 +296,33 @@
     };
   }
 
-  var STATE = load();
-  if (!STATE.mode) STATE.mode = "view";
+  function emptyState() {
+    var t = todayParts();
+    var mk = monthKey(t.y, t.m);
+    var months = {};
+    months[mk] = { checks: {}, weeklyDone: {}, notes: [] };
+    return {
+      habits: [],
+      weeklyTemplates: [[], [], [], [], []],
+      months: months,
+      yearNotes: [],
+      view: "monthly",
+      mode: "edit",
+      currentMonth: mk
+    };
+  }
 
-  function load() {
+  var STATE = null;
+  var CURRENT_PROFILE = null;
+
+  function load(role) {
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return defaultState();
+      if (!raw) return role === "guest" ? emptyState() : defaultState();
       var s = JSON.parse(raw);
-      if (!s || !s.habits || !s.months) return defaultState();
+      if (!s || !s.habits || !s.months) return role === "guest" ? emptyState() : defaultState();
       return s;
-    } catch (e) { return defaultState(); }
+    } catch (e) { return role === "guest" ? emptyState() : defaultState(); }
   }
 
   function save() {
@@ -922,11 +987,111 @@
     pomoSetMinutes(e.target.value);
   });
 
-  ensureMonth(STATE.currentMonth);
-  ensurePomodoroDay();
-  save();
-  render();
-  renderPomo();
+  // ---- Login gate ----
+  var PROFILE_KEY = "habit-tracker-profile-v1";
+
+  function getProfile() {
+    try { return JSON.parse(localStorage.getItem(PROFILE_KEY)); } catch (e) { return null; }
+  }
+  function setProfile(p) {
+    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch (e) {}
+  }
+  function clearProfile() {
+    try { localStorage.removeItem(PROFILE_KEY); } catch (e) {}
+  }
+  function slugify(s) {
+    return String(s || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "user";
+  }
+  function storageKeyFor(profile) {
+    return profile.role === "creator" ? "habit-tracker-v1" : "habit-tracker-v1-guest-" + slugify(profile.email);
+  }
+
+  function renderProfileBar() {
+    var bar = document.getElementById("profileBar");
+    if (!bar || !CURRENT_PROFILE) return;
+    bar.innerHTML = "Signed in as <strong>" + esc(CURRENT_PROFILE.name) + "</strong> &middot; " +
+      (CURRENT_PROFILE.role === "creator" ? "Creator" : "Guest") +
+      " &middot; <button type=\"button\" id=\"switchUserBtn\" class=\"linklike\">Switch user</button>";
+    document.getElementById("switchUserBtn").addEventListener("click", function () {
+      clearProfile();
+      location.reload();
+    });
+  }
+
+  function boot(profile) {
+    CURRENT_PROFILE = profile;
+    STORAGE_KEY = storageKeyFor(profile);
+    STATE = load(profile.role);
+    if (!STATE.mode) STATE.mode = profile.role === "guest" ? "edit" : "view";
+    ensureMonth(STATE.currentMonth);
+    ensurePomodoroDay();
+    save();
+    renderProfileBar();
+    render();
+    renderPomo();
+  }
+
+  function showApp() {
+    document.getElementById("gate").style.display = "none";
+    document.getElementById("wrap").style.display = "";
+  }
+
+  function initGate() {
+    var role = null;
+    var step1 = document.getElementById("gateStep1");
+    var form = document.getElementById("gateForm");
+    var errEl = document.getElementById("gateError");
+
+    document.querySelectorAll(".gate-choice").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        role = btn.getAttribute("data-role");
+        step1.style.display = "none";
+        form.style.display = "block";
+        document.getElementById("gateFormTitle").textContent = role === "creator"
+          ? "Enter your name, email, and the creator access code."
+          : "Set your name and email to start your own tracker.";
+        document.getElementById("gateCodeField").style.display = role === "creator" ? "block" : "none";
+        document.getElementById("gateCode").required = role === "creator";
+        errEl.style.display = "none";
+        form.reset();
+      });
+    });
+
+    document.getElementById("gateBack").addEventListener("click", function () {
+      form.style.display = "none";
+      step1.style.display = "block";
+    });
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var name = document.getElementById("gateName").value.trim();
+      var email = document.getElementById("gateEmail").value.trim();
+      if (!name || !email) {
+        errEl.textContent = "Please fill in your name and email.";
+        errEl.style.display = "block";
+        return;
+      }
+      if (role === "creator") {
+        var code = document.getElementById("gateCode").value.trim();
+        if (code !== "0000") {
+          errEl.textContent = "Incorrect access code.";
+          errEl.style.display = "block";
+          return;
+        }
+      }
+      var profile = { role: role, name: name, email: email };
+      setProfile(profile);
+      showApp();
+      boot(profile);
+    });
+  }
+
+  initGate();
+  var existingProfile = getProfile();
+  if (existingProfile) {
+    showApp();
+    boot(existingProfile);
+  }
 })();
 </script>
 </body>
