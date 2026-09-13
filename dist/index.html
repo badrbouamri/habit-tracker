@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root { --cyan:#0088b0; --magenta:#d6006c; --today:#b5790a; --today-bg:#fbedcd; --ink:#201e1d; --sub:#605d5d; --sub2:#7d7979; --body:#444141; --line:#e4e1e1; --line2:#d7d3d3; --bg:#f3f2f2; --panel:#f8f4f4; }
   * { box-sizing: border-box; }
@@ -164,6 +165,9 @@
   .gate-back:hover { color: var(--cyan); }
   .profile-bar { font-size: 12px; color: var(--sub); }
   .linklike { background: none; border: none; padding: 0; color: var(--cyan); cursor: pointer; font-family: inherit; font-size: inherit; text-decoration: underline; }
+  .export-btn { border: 1px solid var(--line2); background: transparent; border-radius: 2px; padding: 8px 16px; font-size: 13px; cursor: pointer; color: var(--body); font-family: inherit; }
+  .export-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+  .export-btn:disabled { opacity: .5; cursor: default; }
 </style>
 </head>
 <body>
@@ -214,6 +218,7 @@
         <button data-mode="view">See result</button>
         <button data-mode="edit">Edit habits</button>
       </div>
+      <button type="button" class="export-btn" id="exportExcelBtn">&#8681; Download Excel report</button>
     </div>
   </div>
 
@@ -703,6 +708,86 @@
     ta.style.height = ta.scrollHeight + "px";
   }
 
+  // ---- Excel export ----
+  function prevMonthKey(mk) {
+    var t = parseMonthKey(mk);
+    var d = new Date(t.y, t.m - 1, 1);
+    return monthKey(d.getFullYear(), d.getMonth());
+  }
+
+  function habitPctInMonth(habit, mk) {
+    var mdata = STATE.months[mk];
+    if (!mdata) return null;
+    var checks = mdata.checks[habit.id] || {};
+    var count = Object.keys(checks).filter(function (k) { return checks[k]; }).length;
+    if (!habit.goal) return 0;
+    return Math.round((Math.min(count, habit.goal) / habit.goal) * 100);
+  }
+
+  function buildExcelReport() {
+    if (!STATE) return;
+    if (typeof XLSX === "undefined") {
+      alert("The Excel export library failed to load. Check your connection and try again.");
+      return;
+    }
+
+    var mk = STATE.currentMonth;
+    var t = parseMonthKey(mk);
+    var pmk = prevMonthKey(mk);
+    var data = monthlyData(mk);
+
+    var s1 = [["Habit", "Goal", "Checked this month", "Completion %", "Previous month %", "Improvement (pp)"]];
+    data.habits.forEach(function (h) {
+      var prevPct = habitPctInMonth(h, pmk);
+      var curPct = h.goal ? Math.round((h.capped / h.goal) * 100) : 0;
+      s1.push([
+        h.name, h.goal, h.doneCount, curPct + "%",
+        prevPct == null ? "–" : prevPct + "%",
+        prevPct == null ? "–" : (curPct - prevPct)
+      ]);
+    });
+    s1.push([]);
+    s1.push(["Total", data.totalGoal, data.totalDone, data.overallPct + "%", "", ""]);
+
+    var s2 = [["Week", "Item", "Done", "Week completion %"]];
+    var mdata = STATE.months[mk] || { weeklyDone: {} };
+    data.weeks.forEach(function (wk) {
+      var items = STATE.weeklyTemplates[wk.idx] || [];
+      var ring = data.weeklyRings[wk.idx];
+      items.forEach(function (item) {
+        var done = !!(mdata.weeklyDone[wk.idx] && mdata.weeklyDone[wk.idx][item.id]);
+        s2.push(["Week " + (wk.idx + 1), item.text, done ? "Yes" : "No", ""]);
+      });
+      s2.push(["Week " + (wk.idx + 1) + " total", "", ring.actual + " / " + ring.possible, ring.pct + "%"]);
+    });
+
+    var y = t.y;
+    var s3Header = ["Habit"];
+    for (var m = 0; m < 12; m++) s3Header.push(MONTH_NAMES[m].slice(0, 3));
+    s3Header.push("Year avg %", "Improvement (pp)");
+    var s3 = [s3Header];
+    STATE.habits.forEach(function (h) {
+      var row = [h.name];
+      var known = [];
+      for (var m2 = 0; m2 < 12; m2++) {
+        var pct = habitPctInMonth(h, monthKey(y, m2));
+        row.push(pct == null ? "–" : pct + "%");
+        if (pct != null) known.push(pct);
+      }
+      var avg = known.length ? Math.round(known.reduce(function (a, b) { return a + b; }, 0) / known.length) : null;
+      var improvement = known.length >= 2 ? known[known.length - 1] - known[0] : null;
+      row.push(avg == null ? "–" : avg + "%", improvement == null ? "–" : improvement);
+      s3.push(row);
+    });
+
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s1), "Daily Habits");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s2), "Weekly Habits");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s3), "Monthly Trend");
+
+    XLSX.writeFile(wb, "habit-tracker-" + mk + ".xlsx");
+  }
+
   // ---- Mutations ----
   function toggleCheck(habitId, day) {
     var mdata = ensureMonth(STATE.currentMonth);
@@ -901,6 +986,8 @@
     STATE.view = btn.getAttribute("data-view");
     save(); render();
   });
+
+  document.getElementById("exportExcelBtn").addEventListener("click", buildExcelReport);
 
   document.getElementById("modeToggle").addEventListener("click", function (e) {
     var btn = e.target.closest("button[data-mode]");

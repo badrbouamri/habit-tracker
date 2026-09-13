@@ -19,6 +19,9 @@ habits, jot notes, and see an annual overview — all saved locally in your brow
 - Editable notes (monthly and yearly).
 - Month navigation — each month's data is kept separately.
 - Annual overview aggregated from whatever months you've filled in.
+- "Download Excel report" button exports the current month's habits, weekly checklist, and a
+  year-long trend — including a computed improvement (percentage-point change) per habit — to
+  an `.xlsx` file.
 
 ## Deploy
 
