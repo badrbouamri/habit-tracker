@@ -22,6 +22,9 @@ habits, jot notes, and see an annual overview — all saved locally in your brow
 - "Download Excel report" button exports the current month's habits, weekly checklist, and a
   year-long trend — including a computed improvement (percentage-point change) per habit — to
   an `.xlsx` file.
+- "Upload Excel report" button re-reads a previously downloaded report and displays each
+  habit's improvement (month-over-month and year-trend) right on the page, color-coded by
+  whether it went up, down, or stayed flat.
 
 ## Deploy
 

@@ -168,6 +168,15 @@
   .export-btn { border: 1px solid var(--line2); background: transparent; border-radius: 2px; padding: 8px 16px; font-size: 13px; cursor: pointer; color: var(--body); font-family: inherit; }
   .export-btn:hover { border-color: var(--cyan); color: var(--cyan); }
   .export-btn:disabled { opacity: .5; cursor: default; }
+  .import-panel { border: 1px solid var(--line2); background: var(--panel); border-radius: 4px; padding: 22px 24px; margin-bottom: 30px; }
+  .import-panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .import-cols { display: flex; gap: 40px; flex-wrap: wrap; }
+  .import-col { flex: 1 1 260px; min-width: 220px; }
+  .import-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .import-row .delta { font-weight: 600; font-size: 13px; flex: 0 0 auto; }
+  .delta.up { color: var(--cyan); }
+  .delta.down { color: var(--magenta); }
+  .delta.flat { color: var(--sub2); }
 </style>
 </head>
 <body>
@@ -219,6 +228,8 @@
         <button data-mode="edit">Edit habits</button>
       </div>
       <button type="button" class="export-btn" id="exportExcelBtn">&#8681; Download Excel report</button>
+      <button type="button" class="export-btn" id="importExcelBtn">&#8679; Upload Excel report</button>
+      <input type="file" id="importExcelInput" accept=".xlsx,.xls" style="display:none;">
     </div>
   </div>
 
@@ -232,6 +243,14 @@
     <span id="datelineTextAnnual" style="display:none;"></span>
     <div id="habitCount"></div>
     <div>Autosaved locally</div>
+  </div>
+
+  <div class="import-panel" id="importPanel" style="display:none;">
+    <div class="import-panel-head">
+      <div class="label" style="margin-bottom:0;">Improvement from uploaded report</div>
+      <button type="button" class="linklike" id="closeImportPanel">Close</button>
+    </div>
+    <div id="importPanelBody"></div>
   </div>
 
   <div id="app"></div>
@@ -788,6 +807,101 @@
     XLSX.writeFile(wb, "habit-tracker-" + mk + ".xlsx");
   }
 
+  function sheetRows(wb, sheetName) {
+    if (wb.SheetNames.indexOf(sheetName) === -1) return null;
+    return XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1 });
+  }
+
+  function extractImprovementRows(wb) {
+    var out = { daily: null, trend: null };
+
+    var dailyRows = sheetRows(wb, "Daily Habits");
+    if (dailyRows && dailyRows.length) {
+      var dh = dailyRows[0] || [];
+      var hIdx = dh.indexOf("Habit"), cIdx = dh.indexOf("Completion %"), pIdx = dh.indexOf("Previous month %"), iIdx = dh.indexOf("Improvement (pp)");
+      if (hIdx !== -1 && iIdx !== -1) {
+        var daily = [];
+        for (var i = 1; i < dailyRows.length; i++) {
+          var r = dailyRows[i];
+          if (!r || !r[hIdx] || r[hIdx] === "Total") continue;
+          daily.push({ name: r[hIdx], current: r[cIdx], previous: r[pIdx], improvement: r[iIdx] });
+        }
+        out.daily = daily;
+      }
+    }
+
+    var trendRows = sheetRows(wb, "Monthly Trend");
+    if (trendRows && trendRows.length) {
+      var th = trendRows[0] || [];
+      var thIdx = 0, taIdx = th.indexOf("Year avg %"), tiIdx = th.indexOf("Improvement (pp)");
+      if (tiIdx !== -1) {
+        var trend = [];
+        for (var j = 1; j < trendRows.length; j++) {
+          var r2 = trendRows[j];
+          if (!r2 || !r2[thIdx]) continue;
+          trend.push({ name: r2[thIdx], yearAvg: r2[taIdx], improvement: r2[tiIdx] });
+        }
+        out.trend = trend;
+      }
+    }
+
+    return out;
+  }
+
+  function deltaClass(v) {
+    var n = Number(v);
+    if (v == null || v === "" || v === "–" || isNaN(n)) return "flat";
+    return n > 0 ? "up" : n < 0 ? "down" : "flat";
+  }
+
+  function deltaLabel(v) {
+    var n = Number(v);
+    if (v == null || v === "" || v === "–" || isNaN(n)) return "–";
+    return (n > 0 ? "+" : "") + n + " pp";
+  }
+
+  function renderImportPanel(data) {
+    var html = "";
+    if (data.daily && data.daily.length) {
+      html += '<div class="import-col"><div class="label">This month vs. previous month</div>';
+      data.daily.forEach(function (r) {
+        html += '<div class="import-row"><span>' + esc(r.name) + '</span><span class="delta ' + deltaClass(r.improvement) + '">' + deltaLabel(r.improvement) + '</span></div>';
+      });
+      html += '</div>';
+    }
+    if (data.trend && data.trend.length) {
+      html += '<div class="import-col"><div class="label">Year trend (earliest vs. latest month)</div>';
+      data.trend.forEach(function (r) {
+        html += '<div class="import-row"><span>' + esc(r.name) + '</span><span class="delta ' + deltaClass(r.improvement) + '">' + deltaLabel(r.improvement) + '</span></div>';
+      });
+      html += '</div>';
+    }
+    var body = document.getElementById("importPanelBody");
+    body.innerHTML = html
+      ? '<div class="import-cols">' + html + '</div>'
+      : '<div class="hint">No improvement data found in this file. Upload a report generated by this Habit Tracker\'s "Download Excel report" button.</div>';
+    document.getElementById("importPanel").style.display = "block";
+  }
+
+  function handleImportFile(file) {
+    if (!file) return;
+    if (typeof XLSX === "undefined") {
+      alert("The Excel import library failed to load. Check your connection and try again.");
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function (ev) {
+      try {
+        var wb = XLSX.read(new Uint8Array(ev.target.result), { type: "array" });
+        renderImportPanel(extractImprovementRows(wb));
+      } catch (err) {
+        document.getElementById("importPanelBody").innerHTML = '<div class="hint">Could not read this file — make sure it\'s a valid .xlsx report.</div>';
+        document.getElementById("importPanel").style.display = "block";
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
   // ---- Mutations ----
   function toggleCheck(habitId, day) {
     var mdata = ensureMonth(STATE.currentMonth);
@@ -988,6 +1102,19 @@
   });
 
   document.getElementById("exportExcelBtn").addEventListener("click", buildExcelReport);
+
+  document.getElementById("importExcelBtn").addEventListener("click", function () {
+    document.getElementById("importExcelInput").click();
+  });
+
+  document.getElementById("importExcelInput").addEventListener("change", function (e) {
+    handleImportFile(e.target.files[0]);
+    e.target.value = "";
+  });
+
+  document.getElementById("closeImportPanel").addEventListener("click", function () {
+    document.getElementById("importPanel").style.display = "none";
+  });
 
   document.getElementById("modeToggle").addEventListener("click", function (e) {
     var btn = e.target.closest("button[data-mode]");
