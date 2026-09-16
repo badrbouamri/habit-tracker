@@ -30,7 +30,7 @@
   .dateline .nav button { background: none; border: 1px solid var(--line2); border-radius: 2px; color: var(--ink); cursor: pointer; font-size: 13px; padding: 3px 9px; letter-spacing: 0; text-transform: none; }
   .dateline .nav button:hover { border-color: var(--cyan); color: var(--cyan); }
   .scroller { overflow-x: auto; padding-bottom: 10px; }
-  .sheet { min-width: 1420px; }
+  .sheet { min-width: 1680px; }
   .sheet.annual { min-width: 1100px; }
   .label { font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--sub); margin-bottom: 15px; }
   .row-top { display: flex; gap: 30px; align-items: stretch; margin-bottom: 34px; }
@@ -55,6 +55,8 @@
   .thead .namecol { flex: 0 0 300px; }
   .thead .wk { text-align: center; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; padding: 0 6px; }
   .thead .goalcol { flex: 0 0 54px; text-align: center; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sub); }
+  .thead .mincol { flex: 0 0 60px; text-align: center; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sub); }
+  .thead .catcol { flex: 0 0 130px; text-align: center; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sub); }
   .thead .progcol { flex: 0 0 240px; padding-left: 15px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sub); }
   .daysrow { display: flex; align-items: stretch; border-bottom: 1px solid var(--line2); padding: 6px 0; }
   .daysrow .namecol { flex: 0 0 300px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sub2); }
@@ -79,6 +81,15 @@
   .habit-row .goalcol { flex: 0 0 54px; text-align: center; }
   .habit-row .goalcol input { width: 40px; text-align: center; font-size: 13px; color: var(--body); border: 1px solid transparent; background: transparent; border-radius: 2px; font-family: inherit; }
   .habit-row .goalcol input:hover, .habit-row .goalcol input:focus { border-color: var(--line2); }
+  .habit-row .mincol { flex: 0 0 60px; text-align: center; font-size: 13px; color: var(--body); }
+  .habit-row .mincol input { width: 46px; text-align: center; font-size: 13px; color: var(--body); border: 1px solid transparent; background: transparent; border-radius: 2px; font-family: inherit; }
+  .habit-row .mincol input:hover, .habit-row .mincol input:focus { border-color: var(--line2); }
+  .habit-row .catcol { flex: 0 0 130px; text-align: center; display: flex; align-items: center; justify-content: center; }
+  .habit-row .catcol select { max-width: 118px; font-family: inherit; font-size: 12px; padding: 3px 4px; border: 1px solid var(--line2); border-radius: 2px; background: var(--panel); color: var(--ink); }
+  .cat-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; flex: 0 0 9px; }
+  .cat-pill { display: inline-block; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 10px; color: #fdfcfc; white-space: nowrap; }
+  .category-legend { display: flex; gap: 14px; font-size: 11px; letter-spacing: 0.08em; text-transform: none; color: var(--sub2); flex-wrap: wrap; }
+  .legend-chip { display: flex; align-items: center; gap: 5px; }
   .habit-row .progcol { flex: 0 0 240px; padding-left: 15px; display: flex; align-items: center; gap: 10px; }
   .progcol .track { flex: 1 1 auto; height: 8px; background: var(--line); border-radius: 1px; overflow: hidden; }
   .progcol .fill { height: 100%; }
@@ -87,9 +98,11 @@
   .habit-row:hover .rmbtn, .note-row:hover .rmbtn, .item-row:hover .rmbtn { opacity: 1; }
   .rmbtn.always { opacity: 1; }
   .rmbtn:hover { color: var(--magenta); }
-  .addrow { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
-  .addrow input[type=text] { border: 1px solid var(--line2); border-radius: 2px; padding: 5px 8px; font-size: 13px; font-family: inherit; background: transparent; color: var(--ink); }
+  .addrow { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .addrow input[type=text], .addrow input[type=number] { border: 1px solid var(--line2); border-radius: 2px; padding: 5px 8px; font-size: 13px; font-family: inherit; background: transparent; color: var(--ink); }
   .addrow input[name=goal] { width: 54px; text-align: center; }
+  .addrow input[name=minutes] { width: 64px; text-align: center; }
+  .addrow select[name=category] { border: 1px solid var(--line2); border-radius: 2px; padding: 5px 8px; font-size: 13px; font-family: inherit; background: transparent; color: var(--ink); }
   .addrow input[name=name] { flex: 0 0 280px; }
   .addrow button { border: 1px solid var(--line2); background: transparent; border-radius: 2px; padding: 5px 12px; font-size: 13px; cursor: pointer; color: var(--body); }
   .addrow button:hover { border-color: var(--cyan); color: var(--cyan); }
@@ -142,6 +155,7 @@
   .pomo-min-label { font-size: 11px; color: var(--sub2); }
   .pomo-mode { font-size: 12px; color: var(--cyan); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.1em; }
   .pomo.on-break .pomo-mode { color: var(--magenta); }
+  .pomo-section { font-size: 11px; color: var(--sub2); margin-top: 2px; }
   .pomo-time { font-weight: 600; font-size: 34px; margin: 6px 0 10px; font-variant-numeric: tabular-nums; }
   .pomo-controls { display: flex; gap: 6px; margin-bottom: 8px; }
   .pomo-controls button { flex: 1 1 0; border: 1px solid var(--line2); background: transparent; border-radius: 2px; padding: 6px 0; font-size: 12px; cursor: pointer; color: var(--body); font-family: inherit; }
@@ -262,9 +276,10 @@
     </select>
     <div class="pomo-row">
       <input type="number" class="pomo-min" id="pomoMinutes" min="1" max="180" value="25">
-      <span class="pomo-min-label">min work session</span>
+      <span class="pomo-min-label">total focus min</span>
     </div>
     <div class="pomo-mode" id="pomoMode">Work</div>
+    <div class="pomo-section" id="pomoSection"></div>
     <div class="pomo-time" id="pomoTime">25:00</div>
     <div class="pomo-controls">
       <button id="pomoToggle" data-action="pomo-toggle">Start</button>
@@ -281,6 +296,22 @@
   var MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
   var STORAGE_KEY = "habit-tracker-v1";
 
+  var CATEGORIES = [
+    { id: "sport", label: "Sport", color: "#0088b0" },
+    { id: "learn", label: "Learn", color: "#d6006c" },
+    { id: "health", label: "Health", color: "#2f8f4e" },
+    { id: "skills", label: "Developing skills", color: "#7a5cff" }
+  ];
+  function categoryMeta(id) {
+    for (var i = 0; i < CATEGORIES.length; i++) if (CATEGORIES[i].id === id) return CATEGORIES[i];
+    return CATEGORIES[0];
+  }
+  function categoryOptionsHtml(selected) {
+    return CATEGORIES.map(function (c) {
+      return '<option value="' + c.id + '"' + (c.id === selected ? ' selected' : '') + '>' + esc(c.label) + '</option>';
+    }).join('');
+  }
+
   function uid() { return Math.random().toString(36).slice(2, 9); }
   function monthKey(y, m) { return y + "-" + String(m + 1).padStart(2, "0"); }
   function daysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
@@ -290,16 +321,16 @@
     var t = todayParts();
     var mk = monthKey(t.y, t.m);
     var habits = [
-      ["Hydrate with 2.5 liters of water", 31],
-      ["30 minute workout", 20],
-      ["8-hour nightly sleep", 31],
-      ["5 servings of fruits and veggies", 25],
-      ["15 minute meditation", 30],
-      ["Read 20 pages", 20],
-      ["2 hour focused work", 25],
-      ["10 min daily walk", 22],
-      ["1-hour tech detox", 24]
-    ].map(function (h) { return { id: uid(), name: h[0], goal: h[1] }; });
+      ["Hydrate with 2.5 liters of water", 31, 5, "health"],
+      ["30 minute workout", 20, 30, "sport"],
+      ["8-hour nightly sleep", 31, 10, "health"],
+      ["5 servings of fruits and veggies", 25, 10, "health"],
+      ["15 minute meditation", 30, 15, "health"],
+      ["Read 20 pages", 20, 25, "learn"],
+      ["2 hour focused work", 25, 50, "skills"],
+      ["10 min daily walk", 22, 10, "sport"],
+      ["1-hour tech detox", 24, 60, "skills"]
+    ].map(function (h) { return { id: uid(), name: h[0], goal: h[1], focusMinutes: h[2], category: h[3] }; });
     var weeklyTemplates = [
       ["Meal planning", "Schedule workouts", "Weekly to-do list"],
       ["Try new recipes", "Declutter a space", "Creative time"],
@@ -351,6 +382,13 @@
 
   function save() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); } catch (e) {}
+  }
+
+  function normalizeHabits() {
+    STATE.habits.forEach(function (h) {
+      if (!h.focusMinutes || h.focusMinutes < 1) h.focusMinutes = 25;
+      if (!CATEGORIES.some(function (c) { return c.id === h.category; })) h.category = "sport";
+    });
   }
 
   function ensureMonth(mk) {
@@ -425,7 +463,7 @@
       var capped = Math.min(doneCount, h.goal);
       totalGoal += h.goal;
       totalDone += capped;
-      return { id: h.id, name: h.name, goal: h.goal, doneCount: doneCount, capped: capped, checks: checks };
+      return { id: h.id, name: h.name, goal: h.goal, focusMinutes: h.focusMinutes, category: h.category, doneCount: doneCount, capped: capped, checks: checks };
     });
 
     var overallPct = totalGoal ? Math.round((totalDone / totalGoal) * 100) : 0;
@@ -491,10 +529,12 @@
     html += '<div><div class="label">Completed</div><div class="big-num">' + data.totalDone + ' / ' + data.totalGoal + '</div><div class="sub-line">' + data.checksLeft + ' checks left this month</div></div></div>';
     html += '</div>';
 
-    html += '<div class="label">Daily habits</div>';
+    html += '<div class="label" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">Daily habits<span class="category-legend">' + CATEGORIES.map(function (c) {
+      return '<span class="legend-chip"><span class="cat-dot" style="background:' + c.color + ';"></span>' + esc(c.label) + '</span>';
+    }).join('') + '</span></div>';
     html += '<div class="thead"><div class="namecol"></div>';
     data.weeks.forEach(function (wk) { html += '<div class="wk" style="' + wk.headStyle + '">Week ' + (wk.idx + 1) + '</div>'; });
-    html += '<div class="goalcol">Goal</div><div class="progcol">Progress</div></div>';
+    html += '<div class="goalcol">Goal</div><div class="mincol">Focus</div><div class="catcol">Category</div><div class="progcol">Progress</div></div>';
 
     html += '<div class="daysrow"><div class="namecol">Days · ' + data.dim + '</div>';
     data.weeks.forEach(function (wk) {
@@ -506,12 +546,14 @@
       });
       html += '</div>';
     });
-    html += '<div class="goalcol"></div><div class="progcol"></div></div>';
+    html += '<div class="goalcol"></div><div class="mincol"></div><div class="catcol"></div><div class="progcol"></div></div>';
 
     data.habits.forEach(function (h, hi) {
       var pct = h.goal ? Math.round((h.capped / h.goal) * 100) : 0;
+      var cat = categoryMeta(h.category);
       html += '<div class="habit-row" data-habit="' + h.id + '">';
       html += '<div class="namecol">';
+      html += '<span class="cat-dot" style="background:' + cat.color + ';" title="' + esc(cat.label) + '"></span>';
       if (editMode) {
         html += '<button class="reorder" data-action="move-habit-up" data-id="' + h.id + '" title="Move up"' + (hi === 0 ? ' disabled' : '') + '>&uarr;</button>';
         html += '<button class="reorder" data-action="move-habit-down" data-id="' + h.id + '" title="Move down"' + (hi === data.habits.length - 1 ? ' disabled' : '') + '>&darr;</button>';
@@ -533,12 +575,20 @@
         html += '</div>';
       });
       html += '<div class="goalcol">' + (editMode ? '<input type="number" min="1" value="' + h.goal + '" data-action="set-goal" data-id="' + h.id + '">' : h.goal) + '</div>';
-      html += '<div class="progcol"><div class="track"><div class="fill" style="width:' + Math.min(pct,100) + '%;background:' + (hi % 2 === 0 ? INK.cyan : INK.magenta) + ';"></div></div><div class="count">' + h.capped + ' / ' + h.goal + '</div></div>';
+      html += '<div class="mincol">' + (editMode ? '<input type="number" min="1" value="' + h.focusMinutes + '" data-action="set-minutes" data-id="' + h.id + '">' : h.focusMinutes + 'm') + '</div>';
+      html += '<div class="catcol">' + (editMode
+        ? '<select data-action="set-category" data-id="' + h.id + '">' + categoryOptionsHtml(h.category) + '</select>'
+        : '<span class="cat-pill" style="background:' + cat.color + ';">' + esc(cat.label) + '</span>') + '</div>';
+      html += '<div class="progcol"><div class="track"><div class="fill" style="width:' + Math.min(pct,100) + '%;background:' + cat.color + ';"></div></div><div class="count">' + h.capped + ' / ' + h.goal + '</div></div>';
       html += '</div>';
     });
 
     if (editMode) {
-      html += '<div class="addrow"><input type="text" name="name" placeholder="New habit name" id="newHabitName"><input type="text" name="goal" placeholder="Goal" id="newHabitGoal"><button data-action="add-habit">+ Add habit</button></div>';
+      html += '<div class="addrow"><input type="text" name="name" placeholder="New habit name" id="newHabitName">'
+        + '<input type="text" name="goal" placeholder="Goal" id="newHabitGoal">'
+        + '<input type="number" name="minutes" placeholder="Focus min" id="newHabitMinutes" min="1">'
+        + '<select name="category" id="newHabitCategory">' + categoryOptionsHtml("sport") + '</select>'
+        + '<button data-action="add-habit">+ Add habit</button></div>';
     }
 
     html += '<div class="lower">';
@@ -608,7 +658,7 @@
         known.push(pct);
       }
       var total = known.length ? Math.round(known.reduce(function (a,b){return a+b;},0) / known.length) : null;
-      return { name: h.name, cells: cells, total: total };
+      return { name: h.name, category: h.category, cells: cells, total: total };
     });
 
     var quarters = [0,1,2,3].map(function (q) {
@@ -680,7 +730,8 @@
     html += '<div class="yearcol">Year</div></div>';
 
     data.rows.forEach(function (r) {
-      html += '<div class="annual-row"><div class="namecol">' + esc(r.name) + '</div>';
+      var rcat = categoryMeta(r.category);
+      html += '<div class="annual-row"><div class="namecol"><span class="cat-dot" style="background:' + rcat.color + ';margin-right:6px;vertical-align:middle;" title="' + esc(rcat.label) + '"></span>' + esc(r.name) + '</div>';
       r.cells.forEach(function (pct) {
         if (pct == null) {
           html += '<div class="mcell"><div class="box" style="background:#eeecec;color:#b7b3b3;">–</div></div>';
@@ -755,18 +806,18 @@
     var pmk = prevMonthKey(mk);
     var data = monthlyData(mk);
 
-    var s1 = [["Habit", "Goal", "Checked this month", "Completion %", "Previous month %", "Improvement (pp)"]];
+    var s1 = [["Habit", "Goal", "Focus (min)", "Category", "Checked this month", "Completion %", "Previous month %", "Improvement (pp)"]];
     data.habits.forEach(function (h) {
       var prevPct = habitPctInMonth(h, pmk);
       var curPct = h.goal ? Math.round((h.capped / h.goal) * 100) : 0;
       s1.push([
-        h.name, h.goal, h.doneCount, curPct + "%",
+        h.name, h.goal, h.focusMinutes, categoryMeta(h.category).label, h.doneCount, curPct + "%",
         prevPct == null ? "–" : prevPct + "%",
         prevPct == null ? "–" : (curPct - prevPct)
       ]);
     });
     s1.push([]);
-    s1.push(["Total", data.totalGoal, data.totalDone, data.overallPct + "%", "", ""]);
+    s1.push(["Total", data.totalGoal, "", "", data.totalDone, data.overallPct + "%", "", ""]);
 
     var s2 = [["Week", "Item", "Done", "Week completion %"]];
     var mdata = STATE.months[mk] || { weeklyDone: {} };
@@ -910,12 +961,15 @@
     save(); render();
   }
 
-  function addHabit(name, goal) {
+  function addHabit(name, goal, minutes, category) {
     name = (name || "").trim();
     goal = parseInt(goal, 10);
+    minutes = parseInt(minutes, 10);
     if (!name) return;
     if (!goal || goal < 1) goal = daysInMonth(parseMonthKey(STATE.currentMonth).y, parseMonthKey(STATE.currentMonth).m);
-    STATE.habits.push({ id: uid(), name: name, goal: goal });
+    if (!minutes || minutes < 1) minutes = 25;
+    if (!CATEGORIES.some(function (c) { return c.id === category; })) category = "sport";
+    STATE.habits.push({ id: uid(), name: name, goal: goal, focusMinutes: minutes, category: category });
     save(); render();
   }
 
@@ -944,6 +998,17 @@
     var h = STATE.habits.find(function (h) { return h.id === id; });
     goal = parseInt(goal, 10);
     if (h && goal > 0) { h.goal = goal; save(); render(); }
+  }
+
+  function setFocusMinutes(id, minutes) {
+    var h = STATE.habits.find(function (h) { return h.id === id; });
+    minutes = parseInt(minutes, 10);
+    if (h && minutes > 0) { h.focusMinutes = minutes; save(); render(); }
+  }
+
+  function setCategory(id, category) {
+    var h = STATE.habits.find(function (h) { return h.id === id; });
+    if (h && CATEGORIES.some(function (c) { return c.id === category; })) { h.category = category; save(); render(); }
   }
 
   function toggleWeekly(weekIdx, itemId) {
@@ -999,7 +1064,26 @@
 
   // ---- Pomodoro focus timer ----
   var BREAK_SECONDS = 5 * 60;
-  var pomo = { remaining: 25 * 60, running: false, mode: "work", timer: null, workSeconds: 25 * 60, habitId: "" };
+  var SECTION_MINUTES = 25;
+  var pomo = { remaining: 25 * 60, running: false, mode: "work", timer: null, habitId: "", sections: [25], sectionIndex: 0 };
+
+  function computeSections(totalMinutes) {
+    totalMinutes = Math.max(1, parseInt(totalMinutes, 10) || SECTION_MINUTES);
+    var sections = [];
+    var remaining = totalMinutes;
+    while (remaining > 0) {
+      sections.push(Math.min(SECTION_MINUTES, remaining));
+      remaining -= SECTION_MINUTES;
+    }
+    return sections.length ? sections : [SECTION_MINUTES];
+  }
+
+  function applyPomoMinutes(totalMinutes) {
+    pomo.sections = computeSections(totalMinutes);
+    pomo.sectionIndex = 0;
+    pomo.mode = "work";
+    pomo.remaining = pomo.sections[0] * 60;
+  }
 
   function todayDateStr() {
     var d = new Date();
@@ -1047,6 +1131,8 @@
     document.getElementById("pomo").classList.toggle("on-break", pomo.mode === "break");
     document.getElementById("pomoHabit").disabled = pomo.running;
     document.getElementById("pomoMinutes").disabled = pomo.running;
+    var secEl = document.getElementById("pomoSection");
+    if (secEl) secEl.textContent = pomo.sections.length > 1 ? ("Section " + (pomo.sectionIndex + 1) + " of " + pomo.sections.length) : "";
     ensurePomodoroDay();
     var c = STATE.pomodoro.count;
     document.getElementById("pomoCount").textContent = c + (c === 1 ? " pomodoro today" : " pomodoros today");
@@ -1059,12 +1145,23 @@
         ensurePomodoroDay();
         STATE.pomodoro.count++;
         save();
-        if (pomo.habitId) markHabitDoneToday(pomo.habitId);
-        pomo.mode = "break";
-        pomo.remaining = BREAK_SECONDS;
+        pomo.sectionIndex++;
+        if (pomo.sectionIndex < pomo.sections.length) {
+          // More sections left for this habit's focus time — short break, then auto-advance.
+          pomo.mode = "break";
+          pomo.remaining = BREAK_SECONDS;
+        } else {
+          // All sections done — auto-check the linked habit and stop.
+          if (pomo.habitId) markHabitDoneToday(pomo.habitId);
+          clearInterval(pomo.timer);
+          pomo.running = false;
+          pomo.mode = "work";
+          pomo.sectionIndex = 0;
+          pomo.remaining = pomo.sections[0] * 60;
+        }
       } else {
         pomo.mode = "work";
-        pomo.remaining = pomo.workSeconds;
+        pomo.remaining = pomo.sections[pomo.sectionIndex] * 60;
       }
     }
     renderPomo();
@@ -1081,15 +1178,14 @@
     clearInterval(pomo.timer);
     pomo.running = false;
     pomo.mode = "work";
-    pomo.remaining = pomo.workSeconds;
+    pomo.sectionIndex = 0;
+    pomo.remaining = pomo.sections[0] * 60;
     renderPomo();
   }
 
   function pomoSetMinutes(mins) {
-    mins = parseInt(mins, 10);
-    if (!mins || mins < 1) mins = 25;
-    pomo.workSeconds = mins * 60;
-    if (!pomo.running && pomo.mode === "work") pomo.remaining = pomo.workSeconds;
+    if (pomo.running) return;
+    applyPomoMinutes(mins);
     renderPomo();
   }
 
@@ -1140,7 +1236,8 @@
     else if (action === "move-habit-down") moveHabit(btn.getAttribute("data-id"), 1);
     else if (action === "add-habit") {
       var nameEl = document.getElementById("newHabitName"), goalEl = document.getElementById("newHabitGoal");
-      addHabit(nameEl.value, goalEl.value);
+      var minutesEl = document.getElementById("newHabitMinutes"), categoryEl = document.getElementById("newHabitCategory");
+      addHabit(nameEl.value, goalEl.value, minutesEl.value, categoryEl.value);
     }
     else if (action === "toggle-weekly") toggleWeekly(btn.getAttribute("data-week"), btn.getAttribute("data-item"));
     else if (action === "remove-weekly-item") removeWeeklyItem(btn.getAttribute("data-slot"), btn.getAttribute("data-item"));
@@ -1167,6 +1264,8 @@
     var t = e.target;
     var action = t.getAttribute && t.getAttribute("data-action");
     if (action === "set-goal") setGoal(t.getAttribute("data-id"), t.value);
+    else if (action === "set-minutes") setFocusMinutes(t.getAttribute("data-id"), t.value);
+    else if (action === "set-category") setCategory(t.getAttribute("data-id"), t.value);
     else if (action === "rename-habit") renameHabit(t.getAttribute("data-id"), t.value);
     else if (action === "rename-weekly") renameWeeklyItem(t.getAttribute("data-slot"), t.getAttribute("data-item"), t.value);
   });
@@ -1180,7 +1279,7 @@
     var t = e.target;
     if (e.key === "Enter") {
       if (t.classList && (t.classList.contains("name-input") || t.classList.contains("txt-input"))) { e.preventDefault(); t.blur(); }
-      else if (t.id === "newHabitName" || t.id === "newHabitGoal") { e.preventDefault(); document.getElementById("newHabitName").parentElement.querySelector('[data-action="add-habit"]').click(); }
+      else if (t.id === "newHabitName" || t.id === "newHabitGoal" || t.id === "newHabitMinutes") { e.preventDefault(); document.getElementById("newHabitName").parentElement.querySelector('[data-action="add-habit"]').click(); }
       else if (t.id && t.id.indexOf("newItem") === 0) { e.preventDefault(); t.nextElementSibling.click(); }
     }
   });
@@ -1195,6 +1294,12 @@
 
   document.getElementById("pomoHabit").addEventListener("change", function (e) {
     pomo.habitId = e.target.value;
+    var habit = STATE.habits.find(function (h) { return h.id === pomo.habitId; });
+    if (habit && habit.focusMinutes) {
+      document.getElementById("pomoMinutes").value = habit.focusMinutes;
+      applyPomoMinutes(habit.focusMinutes);
+    }
+    renderPomo();
   });
 
   document.getElementById("pomoMinutes").addEventListener("change", function (e) {
@@ -1237,6 +1342,7 @@
     STORAGE_KEY = storageKeyFor(profile);
     STATE = load(profile.role);
     if (!STATE.mode) STATE.mode = profile.role === "guest" ? "edit" : "view";
+    normalizeHabits();
     ensureMonth(STATE.currentMonth);
     ensurePomodoroDay();
     save();
