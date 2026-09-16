@@ -172,6 +172,7 @@
   .gate-field { display: block; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sub); margin-top: 16px; }
   .gate-field input { display: block; width: 100%; margin-top: 6px; border: 1px solid var(--line2); border-radius: 2px; padding: 8px 10px; font-family: inherit; font-size: 14px; background: transparent; color: var(--ink); letter-spacing: normal; text-transform: none; }
   .gate-field input:focus { border-color: var(--magenta); outline: none; }
+  .gate-hint { font-size: 12px; color: var(--sub2); margin-top: 6px; letter-spacing: normal; text-transform: none; }
   .gate-error { color: var(--magenta); font-size: 13px; margin-top: 14px; }
   .gate-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 24px; }
   .gate-actions button[type=submit] { background: var(--cyan); color: var(--panel); border: 1px solid var(--cyan); border-radius: 2px; padding: 9px 18px; font-size: 13px; cursor: pointer; font-family: inherit; }
@@ -216,6 +217,9 @@
       <label class="gate-field">Name<input type="text" id="gateName" autocomplete="name" required></label>
       <label class="gate-field">Email<input type="email" id="gateEmail" autocomplete="email" required></label>
       <label class="gate-field" id="gateCodeField" style="display:none;">Access code<input type="password" id="gateCode" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off"></label>
+      <label class="gate-field" id="gatePasswordField" style="display:none;">Password<input type="password" id="gatePassword" autocomplete="current-password">
+        <div class="gate-hint" id="gatePasswordHint">Enter an email to continue.</div>
+      </label>
       <div class="gate-error" id="gateError" style="display:none;"></div>
       <div class="gate-actions">
         <button type="button" class="gate-back" id="gateBack">&larr; Back</button>
@@ -1308,6 +1312,7 @@
 
   // ---- Login gate ----
   var PROFILE_KEY = "habit-tracker-profile-v1";
+  var ACCOUNTS_KEY = "habit-tracker-accounts-v1";
 
   function getProfile() {
     try { return JSON.parse(localStorage.getItem(PROFILE_KEY)); } catch (e) { return null; }
@@ -1320,6 +1325,18 @@
   }
   function slugify(s) {
     return String(s || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "user";
+  }
+  function getAccounts() {
+    try { return JSON.parse(localStorage.getItem(ACCOUNTS_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function setAccounts(accounts) {
+    try { localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts)); } catch (e) {}
+  }
+  function hashPassword(pw) {
+    var h = 5381;
+    var s = String(pw);
+    for (var i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+    return h.toString(36);
   }
   function storageKeyFor(profile) {
     return profile.role === "creator" ? "habit-tracker-v1" : "habit-tracker-v1-guest-" + slugify(profile.email);
@@ -1361,6 +1378,24 @@
     var step1 = document.getElementById("gateStep1");
     var form = document.getElementById("gateForm");
     var errEl = document.getElementById("gateError");
+    var emailEl = document.getElementById("gateEmail");
+    var passwordEl = document.getElementById("gatePassword");
+    var passwordHint = document.getElementById("gatePasswordHint");
+
+    function updatePasswordHint() {
+      if (role !== "guest") return;
+      var email = emailEl.value.trim();
+      if (!email) {
+        passwordHint.textContent = "Enter an email to continue.";
+        passwordEl.autocomplete = "current-password";
+        return;
+      }
+      var exists = !!getAccounts()[slugify(email)];
+      passwordHint.textContent = exists
+        ? "Welcome back — enter your password to sign in."
+        : "First time here — choose a password to protect your tracker.";
+      passwordEl.autocomplete = exists ? "current-password" : "new-password";
+    }
 
     document.querySelectorAll(".gate-choice").forEach(function (btn) {
       btn.addEventListener("click", function () {
@@ -1369,13 +1404,18 @@
         form.style.display = "block";
         document.getElementById("gateFormTitle").textContent = role === "creator"
           ? "Enter your name, email, and the creator access code."
-          : "Set your name and email to start your own tracker.";
+          : "Sign in or create your account to start (or resume) your tracker.";
         document.getElementById("gateCodeField").style.display = role === "creator" ? "block" : "none";
         document.getElementById("gateCode").required = role === "creator";
+        document.getElementById("gatePasswordField").style.display = role === "guest" ? "block" : "none";
+        passwordEl.required = role === "guest";
         errEl.style.display = "none";
         form.reset();
+        updatePasswordHint();
       });
     });
+
+    emailEl.addEventListener("input", updatePasswordHint);
 
     document.getElementById("gateBack").addEventListener("click", function () {
       form.style.display = "none";
@@ -1398,6 +1438,28 @@
           errEl.style.display = "block";
           return;
         }
+      } else {
+        var password = passwordEl.value;
+        if (!password) {
+          errEl.textContent = "Please enter a password.";
+          errEl.style.display = "block";
+          return;
+        }
+        var accounts = getAccounts();
+        var slug = slugify(email);
+        var account = accounts[slug];
+        if (account) {
+          if (account.passwordHash !== hashPassword(password)) {
+            errEl.textContent = "Incorrect password for this account.";
+            errEl.style.display = "block";
+            return;
+          }
+          account.name = name;
+        } else {
+          account = { name: name, email: email, passwordHash: hashPassword(password) };
+        }
+        accounts[slug] = account;
+        setAccounts(accounts);
       }
       var profile = { role: role, name: name, email: email };
       setProfile(profile);
