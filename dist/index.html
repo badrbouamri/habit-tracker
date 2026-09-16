@@ -8,8 +8,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"></script>
 <style>
-  :root { --cyan:#0088b0; --magenta:#d6006c; --today:#b5790a; --today-bg:#fbedcd; --ink:#201e1d; --sub:#605d5d; --sub2:#7d7979; --body:#444141; --line:#e4e1e1; --line2:#d7d3d3; --bg:#f3f2f2; --panel:#f8f4f4; }
+  :root { --cyan:#35d0e6; --magenta:#ff4d97; --green:#3fe08a; --purple:#a685ff; --gold:#f0c419; --today:#ffd76a; --today-bg:rgba(255,215,106,0.16); --ink:#eef2fa; --sub:#93a1c2; --sub2:#6c7a9c; --body:#c4cee2; --line:#213253; --line2:#2c4068; --bg:#0a1424; --panel:#101d36; --panel2:#16264a; }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Source Serif 4", Georgia, serif; }
   button { font-family: inherit; }
@@ -63,7 +64,7 @@
   .daysrow .wkdays { display: flex; padding: 0 6px; gap: 2px; }
   .daysrow .daynum { width: 22px; text-align: center; border-radius: 3px; }
   .daysrow .daynum.today { background: var(--today-bg); }
-  .daysrow .dow { font-size: 10px; color: #9b9797; letter-spacing: 0.04em; }
+  .daysrow .dow { font-size: 10px; color: var(--sub2); letter-spacing: 0.04em; }
   .daysrow .daynum.today .dow { color: var(--today); }
   .daysrow .n { font-size: 12px; color: var(--body); }
   .daysrow .daynum.today .n { color: var(--today); font-weight: 600; }
@@ -134,6 +135,19 @@
   .stat-row { display: flex; gap: 50px; }
   .stat-row .stat .label2 { font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--sub); margin-bottom: 10px; }
   .stat-row .stat .val { font-weight: 600; font-size: 34px; line-height: 1; }
+  .stat-cards { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 30px; }
+  .stat-card { flex: 1 1 150px; background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--cyan); border-radius: 6px; padding: 16px 18px; }
+  .stat-card .label2 { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--sub); margin-bottom: 8px; }
+  .stat-card .val { font-weight: 600; font-size: 28px; line-height: 1; color: var(--ink); }
+  .stat-card.c-green { border-left-color: var(--green); }
+  .stat-card.c-purple { border-left-color: var(--purple); }
+  .stat-card.c-gold { border-left-color: var(--gold); }
+  .stat-card.c-magenta { border-left-color: var(--magenta); }
+  .chart-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 20px 22px; margin-bottom: 30px; }
+  .chart-panel .label { margin-bottom: 4px; }
+  .chart-canvas-wrap { position: relative; height: 240px; }
+  .chart-row { display: flex; gap: 20px; flex-wrap: wrap; }
+  .chart-row .chart-panel { flex: 1 1 320px; }
   .annual-thead { display: flex; align-items: flex-end; border-bottom: 1px solid var(--ink); padding-bottom: 7px; }
   .annual-thead .namecol { flex: 0 0 300px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sub); }
   .annual-thead .mcol { flex: 1 1 0; min-width: 0; text-align: center; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sub); }
@@ -293,7 +307,15 @@
 
 <script>
 (function () {
-  var INK = { cyan: getComputedStyle(document.documentElement).getPropertyValue('--cyan').trim(), magenta: getComputedStyle(document.documentElement).getPropertyValue('--magenta').trim() };
+  var rootStyle = getComputedStyle(document.documentElement);
+  var INK = {
+    cyan: rootStyle.getPropertyValue('--cyan').trim(),
+    magenta: rootStyle.getPropertyValue('--magenta').trim(),
+    green: rootStyle.getPropertyValue('--green').trim(),
+    purple: rootStyle.getPropertyValue('--purple').trim(),
+    gold: rootStyle.getPropertyValue('--gold').trim()
+  };
+  var WEEK_PALETTE = [INK.cyan, INK.green, INK.purple, INK.gold, INK.magenta];
   var DOW = ["S", "M", "T", "W", "T", "F", "S"];
   var MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
   var STORAGE_KEY = "habit-tracker-v1";
@@ -389,7 +411,7 @@
     return weeks;
   }
 
-  function inkFor(i) { return i % 2 === 0 ? INK.cyan : INK.magenta; }
+  function inkFor(i) { return WEEK_PALETTE[i % WEEK_PALETTE.length]; }
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
@@ -495,6 +517,13 @@
     html += '</div><div class="bar-labels"><div>' + esc(MONTH_NAMES[data.m].slice(0,3).toUpperCase()) + ' 1</div><div>' + esc(MONTH_NAMES[data.m].slice(0,3).toUpperCase()) + ' ' + data.dim + '</div></div></div>';
     html += '<div class="ring-block"><div class="ring"><div class="fill" style="' + ring(data.overallPct, INK.cyan) + '"></div><div class="hole">' + data.overallPct + '%</div></div>';
     html += '<div><div class="label">Completed</div><div class="big-num">' + data.totalDone + ' / ' + data.totalGoal + '</div><div class="sub-line">' + data.checksLeft + ' checks left this month</div></div></div>';
+    html += '</div>';
+
+    html += '<div class="stat-cards">';
+    html += '<div class="stat-card"><div class="label2">Total daily habits</div><div class="val">' + data.habits.length + '</div></div>';
+    html += '<div class="stat-card c-gold"><div class="label2">Daily habits goal</div><div class="val">' + data.totalGoal + '</div></div>';
+    html += '<div class="stat-card c-green"><div class="label2">Completed</div><div class="val">' + data.totalDone + '</div></div>';
+    html += '<div class="stat-card c-magenta"><div class="label2">Remaining</div><div class="val">' + data.checksLeft + '</div></div>';
     html += '</div>';
 
     html += '<div class="label" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">Daily habits<span class="category-legend">' + CATEGORIES.map(function (c) {
@@ -609,7 +638,7 @@
 
   function annualData() {
     var y = parseMonthKey(STATE.currentMonth).y;
-    var ramp = ["#f8f4f4", "#e9f8ff", "#cbeeff", "#99e0ff", "#62c5ee", "#38a6cf", "#006786"];
+    var ramp = ["#16264a", "#153552", "#124a5e", "#0f6672", "#0f8f80", "#2bb583", "#3fe08a"];
     var stepIdx = function (p) { return Math.min(ramp.length - 1, Math.floor((p / 100) * (ramp.length - 1) + 0.5)); };
 
     var rows = STATE.habits.map(function (h) {
@@ -639,6 +668,9 @@
     });
 
     var checksLogged = 0;
+    var goalsSum = 0;
+    var monthCompleted = new Array(12).fill(0);
+    var monthGoal = new Array(12).fill(0);
     var monthAverages = [];
     for (var m = 0; m < 12; m++) {
       var mk2 = monthKey(y, m);
@@ -649,6 +681,9 @@
         var checks = md2.checks[h.id] || {};
         var count = Object.keys(checks).filter(function (k) { return checks[k]; }).length;
         checksLogged += count;
+        monthCompleted[m] += count;
+        monthGoal[m] += h.goal || 0;
+        goalsSum += h.goal || 0;
         if (h.goal) { sumPct += Math.min(count, h.goal) / h.goal; cnt++; }
       });
       if (cnt) monthAverages.push({ m: m, avg: sumPct / cnt });
@@ -658,6 +693,12 @@
       monthAverages.sort(function (a,b) { return b.avg - a.avg; });
       bestMonth = MONTH_NAMES[monthAverages[0].m];
     }
+    var currentMonthIdx = parseMonthKey(STATE.currentMonth).y === y ? parseMonthKey(STATE.currentMonth).m : todayParts().m;
+    var monthlyProgressPct = monthGoal[currentMonthIdx] ? Math.round((Math.min(monthCompleted[currentMonthIdx], monthGoal[currentMonthIdx]) / monthGoal[currentMonthIdx]) * 100) : 0;
+    var quarterlyProgressPct = quarters.length ? Math.round(quarters.reduce(function (a,q){return a+q.pct;},0) / quarters.length) : 0;
+    var totalsKnown = rows.filter(function (r) { return r.total != null; });
+    var totalProgressPct = totalsKnown.length ? Math.round(totalsKnown.reduce(function (a,r){return a+r.total;},0) / totalsKnown.length) : 0;
+    var remaining = Math.max(0, goalsSum - checksLogged);
 
     // Longest streak: consecutive days (across stored months in this year, chronologically)
     // where every habit that existed was checked.
@@ -677,7 +718,12 @@
       }
     });
 
-    return { y: y, rows: rows, quarters: quarters, ramp: ramp, stepIdx: stepIdx, checksLogged: checksLogged, bestMonth: bestMonth, longestStreak: best };
+    return {
+      y: y, rows: rows, quarters: quarters, ramp: ramp, stepIdx: stepIdx,
+      checksLogged: checksLogged, bestMonth: bestMonth, longestStreak: best,
+      goalsSum: goalsSum, remaining: remaining, monthCompleted: monthCompleted, monthGoal: monthGoal,
+      monthlyProgressPct: monthlyProgressPct, quarterlyProgressPct: quarterlyProgressPct, totalProgressPct: totalProgressPct
+    };
   }
 
   function renderAnnual() {
@@ -688,10 +734,21 @@
     html += '<div class="row-top" style="align-items:flex-end;">';
     html += '<div class="month-box"><div class="label">Year</div><div class="month-name">' + data.y + '</div></div>';
     html += '<div class="stat-row">';
-    html += '<div class="stat"><div class="label2">Checks logged</div><div class="val">' + data.checksLogged + '</div></div>';
     html += '<div class="stat"><div class="label2">Best month</div><div class="val">' + esc(data.bestMonth) + '</div></div>';
     html += '<div class="stat"><div class="label2">Longest streak</div><div class="val">' + data.longestStreak + ' days</div></div>';
+    html += '<div class="stat"><div class="label2">Monthly progress</div><div class="val">' + data.monthlyProgressPct + '%</div></div>';
+    html += '<div class="stat"><div class="label2">Quarterly progress</div><div class="val">' + data.quarterlyProgressPct + '%</div></div>';
+    html += '<div class="stat"><div class="label2">Total progress</div><div class="val">' + data.totalProgressPct + '%</div></div>';
     html += '</div></div>';
+
+    html += '<div class="stat-cards">';
+    html += '<div class="stat-card"><div class="label2">Total daily habits</div><div class="val">' + STATE.habits.length + '</div></div>';
+    html += '<div class="stat-card c-gold"><div class="label2">Daily habits goal</div><div class="val">' + data.goalsSum + '</div></div>';
+    html += '<div class="stat-card c-green"><div class="label2">Completed</div><div class="val">' + data.checksLogged + '</div></div>';
+    html += '<div class="stat-card c-magenta"><div class="label2">Remaining</div><div class="val">' + data.remaining + '</div></div>';
+    html += '</div>';
+
+    html += '<div class="chart-panel"><div class="label">Annual progress overview</div><div class="chart-canvas-wrap"><canvas id="annualChart"></canvas></div></div>';
 
     html += '<div class="annual-thead"><div class="namecol">Habit</div>';
     MONTH_NAMES.forEach(function (mn) { html += '<div class="mcol">' + mn.slice(0,3).toUpperCase() + '</div>'; });
@@ -702,10 +759,10 @@
       html += '<div class="annual-row"><div class="namecol"><span class="cat-dot" style="background:' + rcat.color + ';margin-right:6px;vertical-align:middle;" title="' + esc(rcat.label) + '"></span>' + esc(r.name) + '</div>';
       r.cells.forEach(function (pct) {
         if (pct == null) {
-          html += '<div class="mcell"><div class="box" style="background:#eeecec;color:#b7b3b3;">–</div></div>';
+          html += '<div class="mcell"><div class="box" style="background:var(--panel2);color:var(--sub2);">–</div></div>';
         } else {
           var idx = data.stepIdx(pct);
-          html += '<div class="mcell"><div class="box" style="background:' + data.ramp[idx] + ';color:' + (idx >= 6 ? "#f8f4f4" : "#201e1d") + ';">' + pct + '%</div></div>';
+          html += '<div class="mcell"><div class="box" style="background:' + data.ramp[idx] + ';color:' + (idx >= 5 ? "#0a1424" : "#eef2fa") + ';">' + pct + '%</div></div>';
         }
       });
       html += '<div class="yearcol">' + (r.total == null ? "–" : r.total + "%") + '</div></div>';
@@ -732,6 +789,34 @@
 
     html += '</div></div>';
     document.getElementById("app").innerHTML = html;
+    renderAnnualChart(data);
+  }
+
+  var annualChartInstance = null;
+  function renderAnnualChart(data) {
+    var canvas = document.getElementById("annualChart");
+    if (!canvas || typeof Chart === "undefined") return;
+    if (annualChartInstance) { annualChartInstance.destroy(); annualChartInstance = null; }
+    var labels = MONTH_NAMES.map(function (mn) { return mn.slice(0, 3); });
+    annualChartInstance = new Chart(canvas.getContext("2d"), {
+      type: "bar",
+      data: {
+        labels: labels,
+        datasets: [
+          { label: "Completed", data: data.monthCompleted, backgroundColor: INK.green, borderRadius: 3, order: 2 },
+          { label: "Goal", data: data.monthGoal, type: "line", borderColor: INK.gold, borderDash: [5, 4], pointRadius: 0, fill: false, tension: 0, order: 1 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: rootStyle.getPropertyValue('--body').trim() } } },
+        scales: {
+          x: { ticks: { color: rootStyle.getPropertyValue('--sub').trim() }, grid: { color: rootStyle.getPropertyValue('--line').trim() } },
+          y: { ticks: { color: rootStyle.getPropertyValue('--sub').trim() }, grid: { color: rootStyle.getPropertyValue('--line').trim() }, beginAtZero: true }
+        }
+      }
+    });
   }
 
   function render() {
