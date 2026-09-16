@@ -180,6 +180,7 @@
   .gate-back:hover { color: var(--cyan); }
   .profile-bar { font-size: 12px; color: var(--sub); }
   .linklike { background: none; border: none; padding: 0; color: var(--cyan); cursor: pointer; font-family: inherit; font-size: inherit; text-decoration: underline; }
+  .excel-actions { display: flex; gap: 8px; }
   .export-btn { border: 1px solid var(--line2); background: transparent; border-radius: 2px; padding: 8px 16px; font-size: 13px; cursor: pointer; color: var(--body); font-family: inherit; }
   .export-btn:hover { border-color: var(--cyan); color: var(--cyan); }
   .export-btn:disabled { opacity: .5; cursor: default; }
@@ -200,24 +201,19 @@
     <div class="kicker">Habit Tracker</div>
     <h1>Welcome</h1>
     <div id="gateStep1">
-      <div class="tagline">Who's signing in?</div>
+      <div class="tagline">Sign in to continue</div>
       <div class="gate-choices">
-        <button type="button" class="gate-choice" data-role="creator">
-          <div class="gate-choice-title">I'm the Creator</div>
-          <div class="gate-choice-sub">Access the original tracker with an access code</div>
-        </button>
-        <button type="button" class="gate-choice" data-role="guest">
-          <div class="gate-choice-title">Guest</div>
-          <div class="gate-choice-sub">Start a fresh tracker with your own habits</div>
+        <button type="button" class="gate-choice" data-role="account">
+          <div class="gate-choice-title">Account</div>
+          <div class="gate-choice-sub">Sign in or create your account to start your tracker</div>
         </button>
       </div>
     </div>
     <form id="gateForm" style="display:none;">
-      <div class="tagline" id="gateFormTitle"></div>
+      <div class="tagline" id="gateFormTitle">Sign in or create your account to start (or resume) your tracker.</div>
       <label class="gate-field">Name<input type="text" id="gateName" autocomplete="name" required></label>
       <label class="gate-field">Email<input type="email" id="gateEmail" autocomplete="email" required></label>
-      <label class="gate-field" id="gateCodeField" style="display:none;">Access code<input type="password" id="gateCode" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off"></label>
-      <label class="gate-field" id="gatePasswordField" style="display:none;">Password<input type="password" id="gatePassword" autocomplete="current-password">
+      <label class="gate-field">Password<input type="password" id="gatePassword" autocomplete="current-password" required>
         <div class="gate-hint" id="gatePasswordHint">Enter an email to continue.</div>
       </label>
       <div class="gate-error" id="gateError" style="display:none;"></div>
@@ -245,8 +241,10 @@
         <button data-mode="view">See result</button>
         <button data-mode="edit">Edit habits</button>
       </div>
-      <button type="button" class="export-btn" id="exportExcelBtn">&#8681; Download Excel report</button>
-      <button type="button" class="export-btn" id="importExcelBtn">&#8679; Upload Excel report</button>
+      <div class="excel-actions">
+        <button type="button" class="export-btn" id="exportExcelBtn">&#8681; Download Excel report</button>
+        <button type="button" class="export-btn" id="importExcelBtn">&#8679; Upload Excel report</button>
+      </div>
       <input type="file" id="importExcelInput" accept=".xlsx,.xls" style="display:none;">
     </div>
   </div>
@@ -321,40 +319,6 @@
   function daysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
   function todayParts() { var d = new Date(); return { y: d.getFullYear(), m: d.getMonth(), d: d.getDate() }; }
 
-  function defaultState() {
-    var t = todayParts();
-    var mk = monthKey(t.y, t.m);
-    var habits = [
-      ["Hydrate with 2.5 liters of water", 31, 5, "health"],
-      ["30 minute workout", 20, 30, "sport"],
-      ["8-hour nightly sleep", 31, 10, "health"],
-      ["5 servings of fruits and veggies", 25, 10, "health"],
-      ["15 minute meditation", 30, 15, "health"],
-      ["Read 20 pages", 20, 25, "learn"],
-      ["2 hour focused work", 25, 50, "skills"],
-      ["10 min daily walk", 22, 10, "sport"],
-      ["1-hour tech detox", 24, 60, "skills"]
-    ].map(function (h) { return { id: uid(), name: h[0], goal: h[1], focusMinutes: h[2], category: h[3] }; });
-    var weeklyTemplates = [
-      ["Meal planning", "Schedule workouts", "Weekly to-do list"],
-      ["Try new recipes", "Declutter a space", "Creative time"],
-      ["Gratitude journal", "Learn new skills"],
-      ["Tech-free evenings", "Set monthly goals"],
-      ["Home cleaning"]
-    ].map(function (list) { return list.map(function (t) { return { id: uid(), text: t }; }); });
-    var months = {};
-    months[mk] = { checks: {}, weeklyDone: {}, notes: ["Add a note…"] };
-    return {
-      habits: habits,
-      weeklyTemplates: weeklyTemplates,
-      months: months,
-      yearNotes: ["Reset goals every quarter"],
-      view: "monthly",
-      mode: "view",
-      currentMonth: mk
-    };
-  }
-
   function emptyState() {
     var t = todayParts();
     var mk = monthKey(t.y, t.m);
@@ -374,14 +338,14 @@
   var STATE = null;
   var CURRENT_PROFILE = null;
 
-  function load(role) {
+  function load() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return role === "guest" ? emptyState() : defaultState();
+      if (!raw) return emptyState();
       var s = JSON.parse(raw);
-      if (!s || !s.habits || !s.months) return role === "guest" ? emptyState() : defaultState();
+      if (!s || !s.habits || !s.months) return emptyState();
       return s;
-    } catch (e) { return role === "guest" ? emptyState() : defaultState(); }
+    } catch (e) { return emptyState(); }
   }
 
   function save() {
@@ -1338,17 +1302,26 @@
     for (var i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
     return h.toString(36);
   }
+  var LEGACY_STORAGE_KEY = "habit-tracker-v1";
   function storageKeyFor(profile) {
-    return profile.role === "creator" ? "habit-tracker-v1" : "habit-tracker-v1-guest-" + slugify(profile.email);
+    return "habit-tracker-v1-guest-" + slugify(profile.email);
+  }
+  function migrateLegacyDataIfFirstAccount(profile, accounts) {
+    if (Object.keys(accounts).length !== 1) return;
+    try {
+      var legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
+      if (!legacyRaw) return;
+      var legacy = JSON.parse(legacyRaw);
+      if (!legacy || !legacy.habits || !legacy.months) return;
+      localStorage.setItem(storageKeyFor(profile), legacyRaw);
+    } catch (e) {}
   }
 
   function renderProfileBar() {
     var bar = document.getElementById("profileBar");
     if (!bar || !CURRENT_PROFILE) return;
-    bar.innerHTML = "Signed in as <strong>" + esc(CURRENT_PROFILE.name) + "</strong> &middot; " +
-      (CURRENT_PROFILE.role === "creator" ? "Creator" : "Guest") +
-      " &middot; <button type=\"button\" id=\"switchUserBtn\" class=\"linklike\">Switch user</button>";
-    document.getElementById("switchUserBtn").addEventListener("click", function () {
+    bar.innerHTML = "Signed in as <strong>" + esc(CURRENT_PROFILE.name) + "</strong> &middot; <button type=\"button\" id=\"logoutBtn\" class=\"linklike\">Log out</button>";
+    document.getElementById("logoutBtn").addEventListener("click", function () {
       clearProfile();
       location.reload();
     });
@@ -1357,8 +1330,8 @@
   function boot(profile) {
     CURRENT_PROFILE = profile;
     STORAGE_KEY = storageKeyFor(profile);
-    STATE = load(profile.role);
-    if (!STATE.mode) STATE.mode = profile.role === "guest" ? "edit" : "view";
+    STATE = load();
+    if (!STATE.mode) STATE.mode = "edit";
     normalizeHabits();
     ensureMonth(STATE.currentMonth);
     ensurePomodoroDay();
@@ -1374,7 +1347,6 @@
   }
 
   function initGate() {
-    var role = null;
     var step1 = document.getElementById("gateStep1");
     var form = document.getElementById("gateForm");
     var errEl = document.getElementById("gateError");
@@ -1383,7 +1355,6 @@
     var passwordHint = document.getElementById("gatePasswordHint");
 
     function updatePasswordHint() {
-      if (role !== "guest") return;
       var email = emailEl.value.trim();
       if (!email) {
         passwordHint.textContent = "Enter an email to continue.";
@@ -1399,16 +1370,8 @@
 
     document.querySelectorAll(".gate-choice").forEach(function (btn) {
       btn.addEventListener("click", function () {
-        role = btn.getAttribute("data-role");
         step1.style.display = "none";
         form.style.display = "block";
-        document.getElementById("gateFormTitle").textContent = role === "creator"
-          ? "Enter your name, email, and the creator access code."
-          : "Sign in or create your account to start (or resume) your tracker.";
-        document.getElementById("gateCodeField").style.display = role === "creator" ? "block" : "none";
-        document.getElementById("gateCode").required = role === "creator";
-        document.getElementById("gatePasswordField").style.display = role === "guest" ? "block" : "none";
-        passwordEl.required = role === "guest";
         errEl.style.display = "none";
         form.reset();
         updatePasswordHint();
@@ -1426,42 +1389,35 @@
       e.preventDefault();
       var name = document.getElementById("gateName").value.trim();
       var email = document.getElementById("gateEmail").value.trim();
+      var password = passwordEl.value;
       if (!name || !email) {
         errEl.textContent = "Please fill in your name and email.";
         errEl.style.display = "block";
         return;
       }
-      if (role === "creator") {
-        var code = document.getElementById("gateCode").value.trim();
-        if (code !== "0000") {
-          errEl.textContent = "Incorrect access code.";
-          errEl.style.display = "block";
-          return;
-        }
-      } else {
-        var password = passwordEl.value;
-        if (!password) {
-          errEl.textContent = "Please enter a password.";
-          errEl.style.display = "block";
-          return;
-        }
-        var accounts = getAccounts();
-        var slug = slugify(email);
-        var account = accounts[slug];
-        if (account) {
-          if (account.passwordHash !== hashPassword(password)) {
-            errEl.textContent = "Incorrect password for this account.";
-            errEl.style.display = "block";
-            return;
-          }
-          account.name = name;
-        } else {
-          account = { name: name, email: email, passwordHash: hashPassword(password) };
-        }
-        accounts[slug] = account;
-        setAccounts(accounts);
+      if (!password) {
+        errEl.textContent = "Please enter a password.";
+        errEl.style.display = "block";
+        return;
       }
-      var profile = { role: role, name: name, email: email };
+      var accounts = getAccounts();
+      var slug = slugify(email);
+      var account = accounts[slug];
+      var isNewAccount = !account;
+      if (account) {
+        if (account.passwordHash !== hashPassword(password)) {
+          errEl.textContent = "Incorrect password for this account.";
+          errEl.style.display = "block";
+          return;
+        }
+        account.name = name;
+      } else {
+        account = { name: name, email: email, passwordHash: hashPassword(password) };
+      }
+      accounts[slug] = account;
+      setAccounts(accounts);
+      var profile = { name: name, email: email };
+      if (isNewAccount) migrateLegacyDataIfFirstAccount(profile, accounts);
       setProfile(profile);
       showApp();
       boot(profile);
